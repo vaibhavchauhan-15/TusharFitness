@@ -81,6 +81,7 @@ export default async function ExerciseDetailPage({
   const goal = catalog.goals.find((item) => item.slug === exercise.goalSlug) ?? null;
   const bodyPart = catalog.bodyParts.find((item) => item.slug === exercise.bodyPartSlug) ?? null;
   const restTimeLabel = formatRestTime(exercise.restSeconds);
+  const videoPath = exercise.videoPath;
 
   return (
     <div className="space-y-6 pb-4">
@@ -104,9 +105,9 @@ export default async function ExerciseDetailPage({
       </Card>
 
       <Card className="overflow-hidden rounded-[28px] border border-(--card-border) bg-(--surface-strong)">
-        {exercise.videoUrl ? (
+        {videoPath ? (
           <LazyWorkoutVideo
-            src={exercise.videoUrl}
+            path={videoPath}
             poster={exercise.imageUrl}
             className="aspect-video h-full w-full object-cover"
           />
@@ -138,14 +139,6 @@ export default async function ExerciseDetailPage({
             ))}
           </div>
 
-          {exercise.optionalNotes ? (
-            <div className="mt-4 rounded-[22px] border border-(--card-border) bg-(--surface-strong) p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                Optional Notes
-              </p>
-              <p className="mt-3 text-sm leading-7 text-foreground">{exercise.optionalNotes}</p>
-            </div>
-          ) : null}
         </Card>
 
         <Card className="rounded-[28px] p-4 sm:p-5">

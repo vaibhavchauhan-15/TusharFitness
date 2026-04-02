@@ -25,7 +25,7 @@ export function BodyPartSelector({
         </p>
         <h2 className="text-2xl font-bold tracking-tight">All body part cards</h2>
         <p className="text-sm text-muted-foreground">
-          Filtered by goal: <span className="font-semibold text-foreground">{selectedGoalName}</span>
+          Goal context: <span className="font-semibold text-foreground">{selectedGoalName}</span>
         </p>
       </div>
 

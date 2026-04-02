@@ -64,6 +64,18 @@ function toDateKey(value: string) {
   return value.slice(0, 10);
 }
 
+function toExerciseReference(title: string, id: string) {
+  const base = title
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40);
+
+  const safeBase = base || "exercise";
+  return `${safeBase}-${id.slice(0, 8)}`;
+}
+
 export async function getAdminDashboardData(): Promise<DashboardData> {
   const supabase = await createSupabaseServerClient();
 
@@ -110,7 +122,7 @@ export async function getAdminDashboardData(): Promise<DashboardData> {
       .select("id", { count: "exact", head: true })
       .gte("created_at", sevenDaysAgo),
     supabase.from("diet_plans").select("id", { count: "exact", head: true }).eq("status", "published"),
-    supabase.from("workout_plans").select("id", { count: "exact", head: true }).eq("status", "published"),
+    supabase.from("workout_exercises").select("id", { count: "exact", head: true }),
     supabase
       .from("payments")
       .select("amount,status,paid_at")
@@ -213,7 +225,7 @@ export async function getAdminDashboardData(): Promise<DashboardData> {
     { label: "Premium Members", value: String(premiumSubscriptionsResult.count ?? 0) },
     { label: "New Signups (7d)", value: String(signupsResult.count ?? 0) },
     { label: "Diet Plans Published", value: String(dietsCountResult.count ?? 0) },
-    { label: "Workout Programs Published", value: String(workoutsCountResult.count ?? 0) },
+    { label: "Workout Exercises", value: String(workoutsCountResult.count ?? 0) },
     { label: "Revenue This Month", value: toCurrency(monthlyRevenue) },
     {
       label: "Churn Rate",
@@ -438,7 +450,6 @@ export async function listDietPlans(input?: {
 
 export async function listWorkoutPrograms(input?: {
   search?: string;
-  status?: "draft" | "published" | "archived";
   page?: number;
   pageSize?: number;
 }): Promise<ListResult<WorkoutProgramListItem>> {
@@ -454,69 +465,41 @@ export async function listWorkoutPrograms(input?: {
   type WorkoutProgramRow = {
     id: string;
     title: string;
-    slug: string | null;
     goal: string | null;
-    body_part: string | null;
-    goal_type: string | null;
+    body_part_slug: string | null;
+    target_muscle: string | null;
     difficulty: string | null;
-    level: string | null;
-    duration: string | null;
-    duration_weeks: number | null;
-    status: "draft" | "published" | "archived";
-    tags: string[] | null;
+    sets: string | null;
+    reps: string | null;
+    video_path: string | null;
     created_at: string | null;
-    published_at: string | null;
   };
 
   const baseQuery = supabase
-    .from("workout_plans")
-    .select("id,title,slug,goal,body_part,goal_type,difficulty,level,duration,duration_weeks,status,tags,created_at,published_at", {
+    .from("workout_exercises")
+    .select("id,title,goal,body_part_slug,target_muscle,difficulty,sets,reps,video_path,created_at", {
       count: "exact",
     })
     .order("created_at", { ascending: false });
 
-  const withStatus = input?.status ? baseQuery.eq("status", input.status) : baseQuery;
   const withSearch = searchPattern
-    ? withStatus.or(`title.ilike.${searchPattern},slug.ilike.${searchPattern}`)
-    : withStatus;
+    ? baseQuery.or(`title.ilike.${searchPattern},target_muscle.ilike.${searchPattern},goal.ilike.${searchPattern},body_part_slug.ilike.${searchPattern}`)
+    : baseQuery;
 
   const { data, count } = await withSearch.range(from, to).returns<WorkoutProgramRow[]>();
-
-  const programIds = (data ?? []).map((program) => program.id);
-  const mediaByProgramId = new Map<string, string | null>();
-
-  if (programIds.length > 0) {
-    const { data: exerciseRows } = await supabase
-      .from("workout_exercises")
-      .select("workout_plan_id,media_url,position")
-      .in("workout_plan_id", programIds)
-      .order("position", { ascending: true })
-      .returns<Array<{ workout_plan_id: string; media_url: string | null; position: number }>>();
-
-    for (const row of exerciseRows ?? []) {
-      if (!mediaByProgramId.has(row.workout_plan_id)) {
-        mediaByProgramId.set(row.workout_plan_id, row.media_url ?? null);
-      }
-    }
-  }
 
   return {
     rows: (data ?? []).map((program: WorkoutProgramRow) => ({
       id: program.id,
       title: program.title,
-      slug: program.slug,
       goal: program.goal,
-      bodyPart: program.body_part,
-      goalType: program.goal_type,
+      bodyPart: program.body_part_slug,
+      targetMuscle: program.target_muscle,
       difficulty: program.difficulty,
-      level: program.level,
-      duration: program.duration,
-      durationWeeks: program.duration_weeks,
-      exerciseMediaUrl: mediaByProgramId.get(program.id) ?? null,
-      status: program.status,
-      tags: program.tags ?? [],
+      sets: program.sets,
+      reps: program.reps,
+      exerciseMediaPath: program.video_path,
       createdAt: program.created_at,
-      publishedAt: program.published_at,
     })),
     count: count ?? 0,
   };
@@ -793,26 +776,24 @@ export async function listExerciseLibrary(input?: PaginationInput) {
   const result = await supabase
     .from("workout_exercises")
     .select(
-      "id,name,slug,goal_slug,body_part_slug,equipment,target_muscle,difficulty,thumbnail_url,media_url,sets,reps,created_at",
+      "id,title,goal,body_part_slug,equipment,target_muscle,difficulty,thumbnail_url,video_path,sets,reps,created_at",
       { count: "exact" },
     )
-    .not("slug", "is", null)
-    .not("goal_slug", "is", null)
+    .not("goal", "is", null)
     .not("body_part_slug", "is", null)
     .order("created_at", { ascending: false })
     .range(from, to)
     .returns<
       Array<{
         id: string;
-        name: string;
-        slug: string;
-        goal_slug: string;
+        title: string;
+        goal: string;
         body_part_slug: string;
         equipment: string;
         target_muscle: string;
         difficulty: string | null;
         thumbnail_url: string | null;
-        media_url: string | null;
+        video_path: string | null;
         sets: string;
         reps: string;
         created_at: string;
@@ -824,7 +805,10 @@ export async function listExerciseLibrary(input?: PaginationInput) {
   }
 
   return {
-    rows: result.data ?? [],
+    rows: (result.data ?? []).map((row) => ({
+      ...row,
+      reference: toExerciseReference(row.title, row.id),
+    })),
     count: result.count ?? 0,
   };
 }

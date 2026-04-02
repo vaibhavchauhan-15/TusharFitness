@@ -50,19 +50,14 @@ export type DietPlanListItem = {
 export type WorkoutProgramListItem = {
   id: string;
   title: string;
-  slug: string | null;
   goal: string | null;
   bodyPart: string | null;
-  goalType: string | null;
+  targetMuscle: string | null;
   difficulty: string | null;
-  level: string | null;
-  duration: string | null;
-  durationWeeks: number | null;
-  exerciseMediaUrl: string | null;
-  status: "draft" | "published" | "archived";
-  tags: string[];
+  sets: string | null;
+  reps: string | null;
+  exerciseMediaPath: string | null;
   createdAt: string | null;
-  publishedAt: string | null;
 };
 
 export type SubscriptionListItem = {

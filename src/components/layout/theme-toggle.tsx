@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/components/providers/theme-provider";
 import { HiOutlineMoon, HiOutlineSun } from "react-icons/hi2";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";

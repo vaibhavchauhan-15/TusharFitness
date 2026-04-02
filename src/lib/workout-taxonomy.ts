@@ -47,6 +47,7 @@ export const WORKOUT_GOAL_SPECS: readonly WorkoutGoalSpec[] = [
 const BODY_PART_IMAGE_BY_SLUG: Record<string, string> = {
   abs: "/images/workouts/body-parts/abs.png",
   arms: "/images/workouts/body-parts/arms.png",
+  forearms: "/images/workouts/body-parts/arms.png",
   triceps: "/images/workouts/body-parts/triceps.png",
   biceps: "/images/workouts/body-parts/biceps.png",
   chest: "/images/workouts/body-parts/chest.png",
@@ -74,10 +75,11 @@ export const WORKOUT_BODY_PART_SPECS: readonly WorkoutBodyPartSpec[] = [
   { slug: "core", name: "Core", imageUrl: resolveBodyPartImageUrl("core"), sortOrder: 6 },
   { slug: "arms", name: "Arms", imageUrl: resolveBodyPartImageUrl("arms"), sortOrder: 7 },
   { slug: "triceps", name: "Triceps", imageUrl: resolveBodyPartImageUrl("triceps"), sortOrder: 8 },
-  { slug: "glutes", name: "Glutes", imageUrl: resolveBodyPartImageUrl("glutes"), sortOrder: 9 },
-  { slug: "thighs", name: "Thighs", imageUrl: resolveBodyPartImageUrl("thighs"), sortOrder: 10 },
-  { slug: "hips", name: "Hips", imageUrl: resolveBodyPartImageUrl("hips"), sortOrder: 11 },
-  { slug: "abs", name: "Abs", imageUrl: resolveBodyPartImageUrl("abs"), sortOrder: 12 },
+  { slug: "forearms", name: "Forearms", imageUrl: resolveBodyPartImageUrl("forearms"), sortOrder: 9 },
+  { slug: "glutes", name: "Glutes", imageUrl: resolveBodyPartImageUrl("glutes"), sortOrder: 10 },
+  { slug: "thighs", name: "Thighs", imageUrl: resolveBodyPartImageUrl("thighs"), sortOrder: 11 },
+  { slug: "hips", name: "Hips", imageUrl: resolveBodyPartImageUrl("hips"), sortOrder: 12 },
+  { slug: "abs", name: "Abs", imageUrl: resolveBodyPartImageUrl("abs"), sortOrder: 13 },
 ] as const;
 
 export const WORKOUT_GOAL_SLUGS = WORKOUT_GOAL_SPECS.map((item) => item.slug);

@@ -12,7 +12,12 @@ import {
   statusSchema,
   workoutProgramUploadSchema,
 } from "@/lib/admin/validators";
-import { WORKOUT_BODY_PART_SLUGS, WORKOUT_GOAL_SLUGS } from "@/lib/workout-taxonomy";
+import {
+  getWorkoutBodyPartSpec,
+  getWorkoutGoalSpec,
+  WORKOUT_BODY_PART_SLUGS,
+  WORKOUT_GOAL_SLUGS,
+} from "@/lib/workout-taxonomy";
 
 function slugify(value: string) {
   return value
@@ -34,123 +39,39 @@ function toLineItems(value: FormDataEntryValue | null) {
     .filter(Boolean);
 }
 
-function appendSlugSuffix(base: string, attempt: number) {
-  if (attempt <= 0) {
-    return base;
-  }
+function resolveCatalogSlugsForWorkoutUpload(
+  input: {
+    goalSlug: string;
+    bodyPartSlug: string;
+  },
+) {
+  const normalizedGoalSlug = input.goalSlug.trim().toLowerCase();
+  const normalizedBodyPartSlug = input.bodyPartSlug.trim().toLowerCase();
 
-  const suffix = `-${attempt + 1}`;
-  const maxBaseLength = Math.max(1, 96 - suffix.length);
-  return `${base.slice(0, maxBaseLength)}${suffix}`;
-}
+  const goalSlug = WORKOUT_GOAL_SLUGS.includes(normalizedGoalSlug)
+    ? normalizedGoalSlug
+    : null;
+  const bodyPartSlug = WORKOUT_BODY_PART_SLUGS.includes(normalizedBodyPartSlug)
+    ? normalizedBodyPartSlug
+    : null;
 
-const WORKOUT_GOAL_SLUG_ALIASES: Record<string, string[]> = {
-  "fat loss": ["fat-loss"],
-  "fat-loss": ["fat-loss"],
-  "muscle gain": ["muscle-gain"],
-  "muscle-gain": ["muscle-gain"],
-  "general fitness": ["muscle-gain"],
-  "general-fitness": ["muscle-gain"],
-  maintenance: ["muscle-gain"],
-};
-
-const WORKOUT_BODY_PART_SLUG_ALIASES: Record<string, string[]> = {
-  "full body": ["core", "chest", "back", "legs"],
-  "full-body": ["core", "chest", "back", "legs"],
-  "upper body": ["chest", "back", "shoulders", "arms", "biceps"],
-  "upper-body": ["chest", "back", "shoulders", "arms", "biceps"],
-  "lower body": ["legs", "glutes", "thighs", "core"],
-  "lower-body": ["legs", "glutes", "thighs", "core"],
-  arm: ["arms", "biceps", "triceps"],
-};
-
-function pushUnique(target: string[], value: string | null | undefined) {
-  if (!value) {
-    return;
-  }
-
-  const normalized = value.trim().toLowerCase();
-
-  if (!normalized) {
-    return;
-  }
-
-  if (!target.includes(normalized)) {
-    target.push(normalized);
-  }
-}
-
-function toSlugCandidates(value: string, aliases: Record<string, string[]>) {
-  const candidates: string[] = [];
-  const normalized = value.trim().toLowerCase();
-  const slugified = slugify(value);
-
-  pushUnique(candidates, normalized);
-  pushUnique(candidates, slugified);
-
-  for (const alias of aliases[normalized] ?? []) {
-    pushUnique(candidates, alias);
-  }
-
-  for (const alias of aliases[slugified] ?? []) {
-    pushUnique(candidates, alias);
-  }
-
-  return candidates;
-}
-
-function pickBestSlug(candidates: string[], availableSlugs: string[], fallbackToFirst = true) {
-  if (availableSlugs.length === 0) {
+  if (!goalSlug || !bodyPartSlug) {
     return null;
   }
 
-  const availableSet = new Set(availableSlugs.map((slug) => slug.trim().toLowerCase()));
+  const goalSpec = getWorkoutGoalSpec(goalSlug);
+  const bodyPartSpec = getWorkoutBodyPartSpec(bodyPartSlug);
 
-  for (const candidate of candidates) {
-    if (availableSet.has(candidate)) {
-      return candidate;
-    }
+  if (!goalSpec || !bodyPartSpec) {
+    return null;
   }
-
-  return fallbackToFirst ? availableSlugs[0] : null;
-}
-
-function resolveCatalogSlugsForWorkoutUpload(
-  input: {
-    goalSlug?: string;
-    bodyPartSlug?: string;
-    goal: string;
-    goalType: string;
-    bodyPart: string;
-  },
-) {
-  const availableGoalSlugs = [...WORKOUT_GOAL_SLUGS];
-  const availableBodyPartSlugs = [...WORKOUT_BODY_PART_SLUGS];
-
-  const goalCandidates = [
-    ...toSlugCandidates(input.goalSlug ?? "", WORKOUT_GOAL_SLUG_ALIASES),
-    ...toSlugCandidates(input.goalType, WORKOUT_GOAL_SLUG_ALIASES),
-    ...toSlugCandidates(input.goal, WORKOUT_GOAL_SLUG_ALIASES),
-  ];
-
-  const bodyPartCandidates = [
-    ...toSlugCandidates(input.bodyPartSlug ?? "", WORKOUT_BODY_PART_SLUG_ALIASES),
-    ...toSlugCandidates(input.bodyPart, WORKOUT_BODY_PART_SLUG_ALIASES),
-  ];
 
   return {
-    goalSlug: pickBestSlug(goalCandidates, availableGoalSlugs, false),
-    bodyPartSlug: pickBestSlug(bodyPartCandidates, availableBodyPartSlugs, false),
+    goalSlug,
+    bodyPartSlug,
+    goalName: goalSpec.name,
+    bodyPartName: bodyPartSpec.name,
   };
-}
-
-function isSlugUniqueConflict(error: { code?: string | null; message?: string | null } | null | undefined) {
-  if (!error) {
-    return false;
-  }
-
-  const message = String(error.message ?? "").toLowerCase();
-  return error.code === "23505" && message.includes("slug");
 }
 
 async function writeAdminLog(input: {
@@ -240,41 +161,21 @@ export async function createWorkoutProgramAction(formData: FormData) {
   const admin = await requireAdminSession();
   ensureRole(admin.role);
 
-  const title = toTextValue(formData.get("title"));
-  const exerciseName = toTextValue(formData.get("exerciseName"));
-
   const parsed = workoutProgramUploadSchema.parse({
-    title,
-    slug: slugify(toTextValue(formData.get("slug")) || title),
+    title: toTextValue(formData.get("title")),
     goalSlug: toTextValue(formData.get("goalSlug")),
     bodyPartSlug: toTextValue(formData.get("bodyPartSlug")),
-    goal: toTextValue(formData.get("goal")),
-    bodyPart: toTextValue(formData.get("bodyPart")),
-    goalType: toTextValue(formData.get("goalType")),
     difficulty: toTextValue(formData.get("difficulty")),
-    level: toTextValue(formData.get("level")),
-    durationMinutes: toTextValue(formData.get("durationMinutes")),
-    durationWeeks: toTextValue(formData.get("durationWeeks")),
-    description: toTextValue(formData.get("description")),
     thumbnailUrl: toTextValue(formData.get("thumbnailUrl")),
-    status: toTextValue(formData.get("status")) || "draft",
-    exerciseName,
     targetMuscle: toTextValue(formData.get("targetMuscle")),
     equipment: toTextValue(formData.get("equipment")),
-    motion: toTextValue(formData.get("motion")),
-    formCue: toTextValue(formData.get("formCue")),
-    position: toTextValue(formData.get("position")) || "0",
-    durationSeconds: toTextValue(formData.get("durationSeconds")) || "0",
     restSeconds: toTextValue(formData.get("restSeconds")) || "0",
-    mediaUrl: toTextValue(formData.get("videoUrl")),
+    videoPath: toTextValue(formData.get("videoPath")),
     sets: toTextValue(formData.get("sets")),
     reps: toTextValue(formData.get("reps")),
     instructions: toTextValue(formData.get("instructions")),
     formCues: toTextValue(formData.get("formCues")),
     commonMistakes: toTextValue(formData.get("commonMistakes")),
-    cautions: toTextValue(formData.get("cautions")),
-    progressionNotes: toTextValue(formData.get("progressionNotes")),
-    optionalNotes: toTextValue(formData.get("optionalNotes")),
   });
 
   const supabase = await createSupabaseServerClient();
@@ -283,148 +184,55 @@ export async function createWorkoutProgramAction(formData: FormData) {
     throw new Error("Supabase not configured");
   }
 
-  const publishedAt = parsed.status === "published" ? new Date().toISOString() : null;
-  const durationLabel = `${parsed.durationMinutes} mins`;
   const catalogSlugs = resolveCatalogSlugsForWorkoutUpload({
-    goalSlug: parsed.goalSlug || undefined,
-    bodyPartSlug: parsed.bodyPartSlug || undefined,
-    goal: parsed.goal,
-    goalType: parsed.goalType,
-    bodyPart: parsed.bodyPart,
+    goalSlug: parsed.goalSlug,
+    bodyPartSlug: parsed.bodyPartSlug,
   });
 
-  if (!catalogSlugs.goalSlug || !catalogSlugs.bodyPartSlug) {
+  if (!catalogSlugs) {
     throw new Error("Unable to map workout goal/body part. Select valid taxonomy values and try again.");
   }
 
-  let createdWorkoutProgramId: string | null = null;
-  let resolvedProgramSlug = parsed.slug;
-
-  for (let attempt = 0; attempt < 6; attempt += 1) {
-    const candidateSlug = appendSlugSuffix(parsed.slug, attempt);
-    const { data, error } = await supabase
-      .from("workout_plans")
-      .insert({
-        title: parsed.title,
-        slug: candidateSlug,
-        goal: parsed.goal,
-        body_part: parsed.bodyPart,
-        duration: durationLabel,
-        difficulty: parsed.difficulty || null,
-        goal_type: parsed.goalType || null,
-        level: parsed.level || null,
-        duration_weeks: parsed.durationWeeks,
-        thumbnail_url: parsed.thumbnailUrl || null,
-        description: parsed.description || null,
-        status: parsed.status,
-        created_by: admin.user.id,
-        published_at: publishedAt,
-      })
-      .select("id")
-      .single<{ id: string }>();
-
-    if (!error) {
-      createdWorkoutProgramId = data.id;
-      resolvedProgramSlug = candidateSlug;
-      break;
-    }
-
-    if (!isSlugUniqueConflict(error)) {
-      throw new Error(error.message);
-    }
-  }
-
-  if (!createdWorkoutProgramId) {
-    throw new Error("Unable to save workout program because the slug is already in use.");
-  }
-
-  const removeCreatedWorkoutProgram = async () => {
-    if (!createdWorkoutProgramId) {
-      return;
-    }
-
-    await supabase.from("workout_plans").delete().eq("id", createdWorkoutProgramId);
-  };
-
   const instructionSteps = toLineItems(formData.get("instructions"));
-  const formCueLines = toLineItems(formData.get("formCues"));
+  const formCues = toLineItems(formData.get("formCues"));
   const commonMistakeLines = toLineItems(formData.get("commonMistakes"));
-  const resolvedFormCues = formCueLines.length > 0
-    ? formCueLines
-    : parsed.formCue
-      ? [parsed.formCue]
-      : [];
 
-  const baseExerciseSlug = slugify(
-    toTextValue(formData.get("exerciseSlug")) || `${resolvedProgramSlug}-${parsed.exerciseName}`,
-  );
-
-  let createdExerciseSlug: string | null = null;
-
-  for (let attempt = 0; attempt < 6; attempt += 1) {
-    const candidateExerciseSlug = appendSlugSuffix(baseExerciseSlug || "exercise", attempt);
-    const { error: workoutExerciseError } = await supabase.from("workout_exercises").insert({
-      workout_plan_id: createdWorkoutProgramId,
-      slug: candidateExerciseSlug,
-      goal_slug: catalogSlugs.goalSlug,
+  const { data, error } = await supabase
+    .from("workout_exercises")
+    .insert({
+      title: parsed.title,
+      goal: catalogSlugs.goalSlug,
       body_part_slug: catalogSlugs.bodyPartSlug,
-      name: parsed.exerciseName,
       thumbnail_url: parsed.thumbnailUrl || null,
       target_muscle: parsed.targetMuscle,
       equipment: parsed.equipment,
-      difficulty: parsed.difficulty || null,
-      motion: parsed.motion || parsed.targetMuscle || null,
-      form_cue: parsed.formCue || resolvedFormCues[0] || null,
+      difficulty: parsed.difficulty,
       instruction_steps: instructionSteps,
-      form_cues: resolvedFormCues,
+      form_cues: formCues,
       common_mistakes: commonMistakeLines,
-      position: parsed.position,
-      sort_order: parsed.position,
-      duration_seconds: parsed.durationSeconds || null,
-      rest_seconds: parsed.restSeconds || null,
-      media_url: parsed.mediaUrl || null,
+      rest_seconds: parsed.restSeconds,
+      video_path: parsed.videoPath || null,
       sets: parsed.sets,
       reps: parsed.reps,
-      instructions: parsed.instructions || null,
-      cautions: parsed.commonMistakes || parsed.cautions || null,
-      progression_notes: parsed.optionalNotes || parsed.progressionNotes || null,
-    });
+    })
+    .select("id")
+    .single<{ id: string }>();
 
-    if (!workoutExerciseError) {
-      createdExerciseSlug = candidateExerciseSlug;
-      break;
-    }
-
-    if (!isSlugUniqueConflict(workoutExerciseError)) {
-      await removeCreatedWorkoutProgram();
-      throw new Error(workoutExerciseError.message);
-    }
-  }
-
-  if (!createdExerciseSlug) {
-    await removeCreatedWorkoutProgram();
-    throw new Error("Unable to save workout exercise because the exercise slug is already in use.");
+  if (error) {
+    throw new Error(error.message);
   }
 
   await writeAdminLog({
     adminUserId: admin.user.id,
     actionType: "create",
-    entityType: "workout_program",
-    entityId: createdWorkoutProgramId,
+    entityType: "workout_exercise",
+    entityId: data.id,
     metadata: {
       title: parsed.title,
-      slug: resolvedProgramSlug,
-      status: parsed.status,
-      goal: parsed.goal,
-      bodyPart: parsed.bodyPart,
-      goalSlug: catalogSlugs.goalSlug,
+      goal: catalogSlugs.goalSlug,
       bodyPartSlug: catalogSlugs.bodyPartSlug,
-      goalType: parsed.goalType,
       difficulty: parsed.difficulty,
-      durationMinutes: parsed.durationMinutes,
-      mediaUrl: parsed.mediaUrl || null,
-      exerciseName: parsed.exerciseName,
-      exerciseSlug: createdExerciseSlug,
+      videoPath: parsed.videoPath || null,
       targetMuscle: parsed.targetMuscle,
       equipment: parsed.equipment,
     },
@@ -439,26 +247,22 @@ export async function createExerciseLibraryAction(formData: FormData) {
   const admin = await requireAdminSession();
   ensureRole(admin.role);
 
-  const name = toTextValue(formData.get("name"));
+  const title = toTextValue(formData.get("title"));
   const parsed = exerciseLibraryCreateSchema.parse({
-    name,
-    slug: slugify(toTextValue(formData.get("slug")) || name),
+    title,
     goalSlug: toTextValue(formData.get("goalSlug")),
     bodyPartSlug: toTextValue(formData.get("bodyPartSlug")),
-    imageUrl: toTextValue(formData.get("imageUrl")),
-    videoUrl: toTextValue(formData.get("videoUrl")),
+    thumbnailUrl: toTextValue(formData.get("thumbnailUrl")),
+    videoPath: toTextValue(formData.get("videoPath")),
     targetMuscle: toTextValue(formData.get("targetMuscle")),
     equipment: toTextValue(formData.get("equipment")),
     difficulty: toTextValue(formData.get("difficulty")) || "moderate",
-    shortFormCue: toTextValue(formData.get("shortFormCue")),
     sets: toTextValue(formData.get("sets")),
     reps: toTextValue(formData.get("reps")),
     restSeconds: toTextValue(formData.get("restSeconds")) || "0",
-    sortOrder: toTextValue(formData.get("sortOrder")) || "0",
     instructions: toLineItems(formData.get("instructions")),
     formCues: toLineItems(formData.get("formCues")),
     commonMistakes: toLineItems(formData.get("commonMistakes")),
-    optionalNotes: toTextValue(formData.get("optionalNotes")),
   });
 
   const supabase = await createSupabaseServerClient();
@@ -468,65 +272,39 @@ export async function createExerciseLibraryAction(formData: FormData) {
   }
 
   const exerciseInsert = {
-    name: parsed.name,
-    goal_slug: parsed.goalSlug,
+    title: parsed.title,
+    goal: parsed.goalSlug,
     body_part_slug: parsed.bodyPartSlug,
-    thumbnail_url: parsed.imageUrl,
-    media_url: parsed.videoUrl || null,
+    thumbnail_url: parsed.thumbnailUrl || null,
+    video_path: parsed.videoPath || null,
     target_muscle: parsed.targetMuscle,
     equipment: parsed.equipment,
     difficulty: parsed.difficulty,
     sets: parsed.sets,
     reps: parsed.reps,
     rest_seconds: parsed.restSeconds || null,
-    form_cue: parsed.shortFormCue || parsed.formCues[0] || null,
     instruction_steps: parsed.instructions,
     form_cues: parsed.formCues,
     common_mistakes: parsed.commonMistakes,
-    instructions: parsed.instructions.join("\n"),
-    cautions: parsed.commonMistakes.join("\n") || null,
-    progression_notes: parsed.optionalNotes || null,
-    sort_order: parsed.sortOrder,
-    position: parsed.sortOrder,
   };
 
-  let createdExerciseId: string | null = null;
-  let createdExerciseSlug = parsed.slug;
+  const { data, error } = await supabase
+    .from("workout_exercises")
+    .insert(exerciseInsert)
+    .select("id")
+    .single<{ id: string }>();
 
-  for (let attempt = 0; attempt < 6; attempt += 1) {
-    const candidateSlug = appendSlugSuffix(parsed.slug, attempt);
-    const { data, error } = await supabase
-      .from("workout_exercises")
-      .insert({
-        ...exerciseInsert,
-        slug: candidateSlug,
-      })
-      .select("id")
-      .single<{ id: string }>();
-
-    if (!error) {
-      createdExerciseId = data.id;
-      createdExerciseSlug = candidateSlug;
-      break;
-    }
-
-    if (!isSlugUniqueConflict(error)) {
-      throw new Error(error.message);
-    }
-  }
-
-  if (!createdExerciseId) {
-    throw new Error("Unable to save exercise because the slug is already in use.");
+  if (error) {
+    throw new Error(error.message);
   }
 
   await writeAdminLog({
     adminUserId: admin.user.id,
     actionType: "create",
     entityType: "exercise_library",
-    entityId: createdExerciseId,
+    entityId: data.id,
     metadata: {
-      name: parsed.name,
-      slug: createdExerciseSlug,
+      title: parsed.title,
       goalSlug: parsed.goalSlug,
       bodyPartSlug: parsed.bodyPartSlug,
     },
@@ -737,29 +515,19 @@ export async function setWorkoutStatusAction(
     throw new Error("Supabase not configured");
   }
 
-  const publishedAt = validatedStatus === "published" ? new Date().toISOString() : null;
-
-  const { error } = await supabase
-    .from("workout_plans")
-    .update({
-      status: validatedStatus,
-      published_at: publishedAt,
-    })
-    .eq("id", workoutId);
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
   await writeAdminLog({
     adminUserId: admin.user.id,
     actionType: "status_change",
-    entityType: "workout_program",
+    entityType: "workout_exercise",
     entityId: workoutId,
-    metadata: { status: validatedStatus },
+    metadata: {
+      status: validatedStatus,
+      ignored: true,
+      reason: "workout_exercises schema does not support status",
+    },
   });
 
-  revalidatePath("/app/admin/workouts");
+  throw new Error("Workout status is no longer editable after moving to workout_exercises-only schema.");
 }
 
 export async function setUserAccountStatusAction(

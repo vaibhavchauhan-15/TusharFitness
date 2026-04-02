@@ -202,8 +202,32 @@ $$;
 create index if not exists idx_workout_completions_user_completed_at
 on public.workout_completions(user_id, completed_at desc);
 
-create unique index if not exists workout_once_per_day
-on public.workout_completions(user_id, workout_plan_id, (public.utc_date(completed_at)));
+do $$
+begin
+  if exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'workout_completions'
+      and column_name = 'workout_plan_id'
+  ) then
+    execute $sql$
+      create unique index if not exists workout_once_per_day
+      on public.workout_completions(user_id, workout_plan_id, (public.utc_date(completed_at)))
+    $sql$;
+  elsif exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'workout_completions'
+      and column_name = 'workout_exercise_id'
+  ) then
+    execute $sql$
+      create unique index if not exists workout_once_per_day
+      on public.workout_completions(user_id, workout_exercise_id, (public.utc_date(completed_at)))
+    $sql$;
+  end if;
+end $$;
 
 create table if not exists public.diet_completions (
   id uuid primary key default gen_random_uuid(),

@@ -66,15 +66,9 @@ export type SessionState = {
 
 type WorkoutRow = {
   title: string;
-  description: string | null;
-  duration: string | null;
-  workout_exercises:
-    | {
-        name: string;
-        sets: string | null;
-        reps: string | null;
-      }[]
-    | null;
+  sets: string | null;
+  reps: string | null;
+  goal: string | null;
 };
 
 type DietRow = {
@@ -129,6 +123,28 @@ function toStringList(value: unknown) {
     .filter((item): item is string => typeof item === "string")
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function toWorkoutGoalSlug(value: string | null) {
+  const normalized = value?.trim().toLowerCase() ?? "";
+
+  if (!normalized) {
+    return null;
+  }
+
+  switch (normalized) {
+    case "muscle gain":
+      return "muscle-gain";
+    case "fat loss":
+      return "fat-loss";
+    case "muscle-gain":
+    case "fat-loss":
+    case "strength":
+    case "endurance":
+      return normalized;
+    default:
+      return null;
+  }
 }
 
 export async function getSessionState(): Promise<SessionState | null> {
@@ -274,8 +290,8 @@ export async function getDashboardState() {
     ]);
 
   const workoutQuery = supabase
-    .from("workout_plans")
-    .select("title,description,duration,workout_exercises(name,sets,reps)")
+    .from("workout_exercises")
+    .select("title,sets,reps,goal")
     .limit(1);
 
   const dietQuery = supabase
@@ -283,8 +299,12 @@ export async function getDashboardState() {
     .select("title,category,calories,protein,carbs,fats,diet_meals(meal_name,meal_time,items)")
     .limit(1);
 
+  const workoutGoalSlug = toWorkoutGoalSlug(goal);
+
   const [workoutResult, dietResult, weightLogResult, strengthLogResult] = await Promise.all([
-    goal ? workoutQuery.eq("goal", goal).returns<WorkoutRow[]>() : workoutQuery.returns<WorkoutRow[]>(),
+    workoutGoalSlug
+      ? workoutQuery.eq("goal", workoutGoalSlug).returns<WorkoutRow[]>()
+      : workoutQuery.returns<WorkoutRow[]>(),
     dietType
       ? dietQuery.eq("category", dietType).returns<DietRow[]>()
       : dietQuery.returns<DietRow[]>(),
@@ -343,13 +363,15 @@ export async function getDashboardState() {
     todayWorkout: workoutRow
       ? {
           title: workoutRow.title,
-          description: workoutRow.description ?? "",
-          duration: workoutRow.duration ?? "",
-          exercises: (workoutRow.workout_exercises ?? []).map((exercise) => ({
-            name: exercise.name,
-            sets: exercise.sets ?? "",
-            reps: exercise.reps ?? "",
-          })),
+          description: "",
+          duration: "",
+          exercises: [
+            {
+              name: workoutRow.title,
+              sets: workoutRow.sets ?? "",
+              reps: workoutRow.reps ?? "",
+            },
+          ],
         }
       : null,
     todayDiet: dietRow

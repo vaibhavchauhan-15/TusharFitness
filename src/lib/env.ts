@@ -1,5 +1,39 @@
+function sanitizeBaseUrl(value: string) {
+  const trimmed = value.trim().replace(/\/+$/, "");
+
+  try {
+    return new URL(trimmed).toString().replace(/\/+$/, "");
+  } catch {
+    return null;
+  }
+}
+
+function resolveAppUrl() {
+  const candidates = [
+    process.env.NEXT_PUBLIC_APP_URL,
+    process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : undefined,
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined,
+  ];
+
+  for (const candidate of candidates) {
+    if (!candidate) {
+      continue;
+    }
+
+    const sanitized = sanitizeBaseUrl(candidate);
+
+    if (sanitized) {
+      return sanitized;
+    }
+  }
+
+  return "http://localhost:3000";
+}
+
 export const env = {
-  appUrl: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+  appUrl: resolveAppUrl(),
   supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
   supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,

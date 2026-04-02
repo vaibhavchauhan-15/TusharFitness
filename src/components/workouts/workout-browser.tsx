@@ -7,23 +7,12 @@ import { Card } from "@/components/ui/card";
 import { BodyPartSelector } from "@/components/workouts/body-part-selector";
 import type { WorkoutBodyPart, WorkoutCatalog } from "@/lib/supabase/workouts";
 
-function getBodyPartsForGoal(catalog: WorkoutCatalog, goalSlug: string | null) {
+function getBodyPartsForGoal(catalog: WorkoutCatalog) {
   if (catalog.bodyParts.length === 0) {
     return [] as WorkoutBodyPart[];
   }
 
-  if (!goalSlug) {
-    return catalog.bodyParts;
-  }
-
-  const available = new Set(
-    catalog.exercises
-      .filter((exercise) => exercise.goalSlug === goalSlug)
-      .map((exercise) => exercise.bodyPartSlug),
-  );
-
-  const filteredBodyParts = catalog.bodyParts.filter((bodyPart) => available.has(bodyPart.slug));
-  return filteredBodyParts.length > 0 ? filteredBodyParts : catalog.bodyParts;
+  return catalog.bodyParts;
 }
 
 type WorkoutBrowserProps = {
@@ -39,7 +28,7 @@ export function WorkoutBrowser({
 }: WorkoutBrowserProps) {
   const router = useRouter();
 
-  const initialBodyPartOptions = getBodyPartsForGoal(catalog, initialGoalSlug);
+  const initialBodyPartOptions = getBodyPartsForGoal(catalog);
   const initialBodyPartSlug =
     preferredBodyPartSlug && initialBodyPartOptions.some((bodyPart) => bodyPart.slug === preferredBodyPartSlug)
       ? preferredBodyPartSlug
@@ -54,8 +43,8 @@ export function WorkoutBrowser({
   );
 
   const bodyParts = useMemo(
-    () => getBodyPartsForGoal(catalog, selectedGoalSlug),
-    [catalog, selectedGoalSlug],
+    () => getBodyPartsForGoal(catalog),
+    [catalog],
   );
 
   const handleBodyPartSelect = (bodyPartSlug: string) => {

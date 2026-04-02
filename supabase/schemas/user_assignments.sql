@@ -2,7 +2,7 @@ create table public.user_assignments (
   id uuid not null default gen_random_uuid (),
   user_id uuid not null,
   diet_plan_id uuid null,
-  workout_id uuid null,
+  workout_exercise_id uuid null,
   assigned_by uuid null,
   status text not null default 'active'::text,
   notes text null,
@@ -14,7 +14,7 @@ create table public.user_assignments (
   constraint user_assignments_assigned_by_fkey foreign KEY (assigned_by) references profiles (id) on delete set null,
   constraint user_assignments_diet_plan_id_fkey foreign KEY (diet_plan_id) references diet_plans (id) on delete set null,
   constraint user_assignments_user_id_fkey foreign KEY (user_id) references profiles (id) on delete CASCADE,
-  constraint user_assignments_workout_id_fkey foreign KEY (workout_id) references workout_plans (id) on delete set null,
+  constraint user_assignments_workout_exercise_id_fkey foreign KEY (workout_exercise_id) references workout_exercises (id) on delete set null,
   constraint user_assignments_status_check check (
     (
       status = any (

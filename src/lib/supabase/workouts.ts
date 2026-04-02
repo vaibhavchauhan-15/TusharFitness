@@ -32,7 +32,7 @@ export type WorkoutExercise = {
   bodyPartSlug: string;
   name: string;
   imageUrl: string;
-  videoUrl: string | null;
+  videoPath: string | null;
   targetMuscle: string;
   equipment: string;
   difficulty: string;
@@ -42,7 +42,6 @@ export type WorkoutExercise = {
   formTips: string[];
   shortFormCue: string;
   commonMistakes: string[];
-  optionalNotes: string | null;
   restSeconds: number | null;
   sortOrder: number;
 };
@@ -72,12 +71,11 @@ const PROFILE_GOAL_TO_WORKOUT_GOAL: Record<string, string> = {
 
 type WorkoutExerciseRow = {
   id: string;
-  slug: string | null;
-  goal_slug: string | null;
+  goal: string | null;
   body_part_slug: string | null;
-  name: string;
+  title: string;
   thumbnail_url: string | null;
-  media_url: string | null;
+  video_path: string | null;
   target_muscle: string | null;
   equipment: string | null;
   difficulty: string | null;
@@ -86,12 +84,8 @@ type WorkoutExerciseRow = {
   instruction_steps: unknown;
   form_cues: unknown;
   common_mistakes: unknown;
-  form_cue: string | null;
-  instructions: string | null;
-  cautions: string | null;
-  progression_notes: string | null;
   rest_seconds: number | null;
-  sort_order: number | null;
+  created_at: string | null;
 };
 
 type SupabaseServerClient = NonNullable<Awaited<ReturnType<typeof createSupabaseServerClient>>>;
@@ -110,13 +104,12 @@ async function fetchWorkoutExerciseRows(supabase: SupabaseServerClient) {
   const result = await supabase
     .from("workout_exercises")
     .select(
-      "id,slug,goal_slug,body_part_slug,name,thumbnail_url,media_url,target_muscle,equipment,difficulty,sets,reps,instruction_steps,form_cues,common_mistakes,form_cue,instructions,cautions,progression_notes,rest_seconds,sort_order",
+      "id,goal,body_part_slug,title,thumbnail_url,video_path,target_muscle,equipment,difficulty,sets,reps,instruction_steps,form_cues,common_mistakes,rest_seconds,created_at",
     )
-    .not("slug", "is", null)
-    .not("goal_slug", "is", null)
+    .not("goal", "is", null)
     .not("body_part_slug", "is", null)
-    .order("sort_order", { ascending: true })
-    .order("name", { ascending: true })
+    .order("created_at", { ascending: true })
+    .order("title", { ascending: true })
     .returns<WorkoutExerciseRow[]>();
 
   return {
@@ -138,42 +131,6 @@ function toStringList(value: unknown, fallback: string[]) {
   return parsed.length > 0 ? parsed : fallback;
 }
 
-function toStringListFromText(value: string | null | undefined, fallback: string[]) {
-  const parsed = String(value ?? "")
-    .split(/\r?\n/)
-    .map((item) => item.trim())
-    .filter(Boolean);
-
-  return parsed.length > 0 ? parsed : fallback;
-}
-
-function normalizeGoogleDriveImageUrl(rawUrl: string) {
-  try {
-    const parsedUrl = new URL(rawUrl);
-    const host = parsedUrl.hostname.toLowerCase();
-
-    if (host !== "drive.google.com" && host !== "www.drive.google.com") {
-      return rawUrl;
-    }
-
-    const pathIdMatch = parsedUrl.pathname.match(/\/file\/d\/([^/]+)/);
-    const queryId = parsedUrl.searchParams.get("id");
-    const fileId = pathIdMatch?.[1] ?? queryId;
-
-    if (!fileId) {
-      return rawUrl;
-    }
-
-    const directUrl = new URL("https://drive.google.com/uc");
-    directUrl.searchParams.set("export", "view");
-    directUrl.searchParams.set("id", fileId);
-
-    return directUrl.toString();
-  } catch {
-    return rawUrl;
-  }
-}
-
 function resolveExerciseImageUrl(imageUrl: string | null | undefined) {
   const trimmed = imageUrl?.trim();
 
@@ -181,42 +138,56 @@ function resolveExerciseImageUrl(imageUrl: string | null | undefined) {
     return "/images/workouts/exercises/default.svg";
   }
 
-  return normalizeGoogleDriveImageUrl(trimmed);
+  return trimmed;
+}
+
+function resolveExerciseVideoPath(videoPath: string | null | undefined) {
+  const trimmed = videoPath?.trim();
+  return trimmed ? trimmed : null;
+}
+
+function toExerciseSlug(row: Pick<WorkoutExerciseRow, "id" | "title">) {
+  const titleSlug = row.title
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 72);
+
+  const fallback = titleSlug || "exercise";
+  return `${fallback}-${row.id.slice(0, 8)}`;
 }
 
 function mapExerciseRow(row: WorkoutExerciseRow): WorkoutExercise {
-  if (!row.slug || !row.goal_slug || !row.body_part_slug) {
+  if (!row.goal || !row.body_part_slug) {
     throw new Error("Workout exercise row is missing catalog identifiers");
   }
 
   const instructions = toStringList(
     row.instruction_steps,
-    toStringListFromText(row.instructions, ["No instruction provided yet."]),
+    ["No instruction provided yet."],
   );
 
   const formTips = toStringList(
     row.form_cues,
-    toStringListFromText(
-      row.form_cue,
-      ["Focus on controlled reps and stable posture."],
-    ),
+    ["Focus on controlled reps and stable posture."],
   );
 
   const commonMistakes = toStringList(
     row.common_mistakes,
-    toStringListFromText(row.cautions, ["Avoid rushing reps and losing posture."]),
+    ["Avoid rushing reps and losing posture."],
   );
 
-  const shortFormCue = row.form_cue?.trim() || formTips[0] || "Focus on controlled movement.";
+  const shortFormCue = formTips[0] || "Focus on controlled movement.";
 
   return {
     id: row.id,
-    slug: row.slug,
-    goalSlug: row.goal_slug,
+    slug: toExerciseSlug(row),
+    goalSlug: row.goal,
     bodyPartSlug: row.body_part_slug,
-    name: row.name,
+    name: row.title,
     imageUrl: resolveExerciseImageUrl(row.thumbnail_url),
-    videoUrl: row.media_url ?? null,
+    videoPath: resolveExerciseVideoPath(row.video_path),
     targetMuscle: row.target_muscle?.trim() || "Not specified",
     equipment: row.equipment?.trim() || "Not specified",
     difficulty: row.difficulty?.trim() || "Not set",
@@ -226,9 +197,8 @@ function mapExerciseRow(row: WorkoutExerciseRow): WorkoutExercise {
     formTips,
     shortFormCue,
     commonMistakes,
-    optionalNotes: row.progression_notes?.trim() || null,
     restSeconds: row.rest_seconds ?? null,
-    sortOrder: row.sort_order ?? 0,
+    sortOrder: 0,
   };
 }
 
@@ -286,13 +256,20 @@ function buildGoals(exercises: WorkoutExercise[]) {
 }
 
 function buildBodyParts(exercises: WorkoutExercise[]) {
-  const availableBodyPartSlugs = Array.from(new Set(exercises.map((exercise) => exercise.bodyPartSlug)));
+  const taxonomyBodyParts = WORKOUT_BODY_PART_SPECS.map((spec) => mapBodyPartSlugToBodyPart(spec.slug));
 
-  if (availableBodyPartSlugs.length === 0) {
-    return getFallbackBodyParts();
+  const extraBodyPartSlugs = Array.from(new Set(exercises.map((exercise) => exercise.bodyPartSlug))).filter(
+    (slug) => !WORKOUT_BODY_PART_SPECS.some((spec) => spec.slug === slug),
+  );
+
+  if (extraBodyPartSlugs.length === 0) {
+    return taxonomyBodyParts;
   }
 
-  return orderBySortThenName(availableBodyPartSlugs.map(mapBodyPartSlugToBodyPart));
+  return orderBySortThenName([
+    ...taxonomyBodyParts,
+    ...extraBodyPartSlugs.map(mapBodyPartSlugToBodyPart),
+  ]);
 }
 
 export async function getWorkoutCatalogForUser(): Promise<WorkoutCatalog> {
