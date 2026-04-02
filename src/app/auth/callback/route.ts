@@ -3,6 +3,8 @@ import { isActiveAdminUser } from "@/lib/admin/access";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ensureProfileForUser } from "@/lib/supabase/profile";
 
+export const dynamic = "force-dynamic";
+
 function normalizeSource(value: string | null) {
   return value === "signup" ? "signup" : "login";
 }

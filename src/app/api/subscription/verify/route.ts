@@ -5,6 +5,10 @@ import { env, isRazorpayConfigured } from "@/lib/env";
 import { getSessionState } from "@/lib/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+const NO_STORE_HEADERS = {
+  "Cache-Control": "private, no-store",
+};
+
 type VerifyBody = {
   razorpay_order_id?: string;
   razorpay_payment_id?: string;
@@ -50,12 +54,13 @@ async function parseVerifyBody(request: Request) {
 }
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   const session = await getSessionState();
 
   if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: NO_STORE_HEADERS });
   }
 
   const supabase = await createSupabaseServerClient();
@@ -63,16 +68,21 @@ export async function POST(request: Request) {
   if (!supabase) {
     return NextResponse.json(
       { error: "Supabase is not configured." },
-      { status: 503 },
+      { status: 503, headers: NO_STORE_HEADERS },
     );
   }
 
   if (!isRazorpayConfigured) {
-    return NextResponse.json({
-      verified: false,
-      mode: "demo",
-      message: "Razorpay keys are not configured yet.",
-    });
+    return NextResponse.json(
+      {
+        verified: false,
+        mode: "demo",
+        message: "Razorpay keys are not configured yet.",
+      },
+      {
+        headers: NO_STORE_HEADERS,
+      },
+    );
   }
 
   const body = await parseVerifyBody(request);
@@ -86,7 +96,7 @@ export async function POST(request: Request) {
         verified: false,
         error: "Missing payment verification fields.",
       },
-      { status: 400 },
+      { status: 400, headers: NO_STORE_HEADERS },
     );
   }
 
@@ -96,7 +106,7 @@ export async function POST(request: Request) {
         verified: false,
         error: "Invalid payment signature.",
       },
-      { status: 400 },
+      { status: 400, headers: NO_STORE_HEADERS },
     );
   }
 
@@ -122,7 +132,7 @@ export async function POST(request: Request) {
         settled: false,
         error: message,
       },
-      { status: 502 },
+      { status: 502, headers: NO_STORE_HEADERS },
     );
   }
 
@@ -132,7 +142,7 @@ export async function POST(request: Request) {
         verified: false,
         error: "Payment/order mismatch.",
       },
-      { status: 400 },
+      { status: 400, headers: NO_STORE_HEADERS },
     );
   }
 
@@ -146,7 +156,7 @@ export async function POST(request: Request) {
         verified: false,
         error: "Payment does not belong to the authenticated user.",
       },
-      { status: 403 },
+      { status: 403, headers: NO_STORE_HEADERS },
     );
   }
 
@@ -164,7 +174,7 @@ export async function POST(request: Request) {
         message:
           "Payment signature is valid but capture is not confirmed yet. Confirm status before granting access.",
       },
-      { status: 202 },
+      { status: 202, headers: NO_STORE_HEADERS },
     );
   }
 
@@ -211,12 +221,17 @@ export async function POST(request: Request) {
     });
   }
 
-  return NextResponse.json({
-    verified: true,
-    settled: true,
-    paymentId,
-    orderId,
-    paymentStatus,
-    orderStatus,
-  });
+  return NextResponse.json(
+    {
+      verified: true,
+      settled: true,
+      paymentId,
+      orderId,
+      paymentStatus,
+      orderStatus,
+    },
+    {
+      headers: NO_STORE_HEADERS,
+    },
+  );
 }

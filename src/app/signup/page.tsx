@@ -2,6 +2,8 @@ import { AuthShell } from "@/components/marketing/auth-shell";
 import { SignupForm } from "@/components/marketing/signup-form";
 import { Badge } from "@/components/ui/badge";
 
+export const dynamic = "force-dynamic";
+
 type SignupPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };

@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 
 type LazyWorkoutVideoProps = {
@@ -56,7 +57,7 @@ async function getSignedVideoUrl(path: string, signal: AbortSignal) {
 export function LazyWorkoutVideo({ path, poster, className }: LazyWorkoutVideoProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [shouldLoad, setShouldLoad] = useState(false);
-  const [playbackSource, setPlaybackSource] = useState<string | null>(null);
+  const normalizedPath = useMemo(() => path.trim().replace(/^\/+/, ""), [path]);
 
   useEffect(() => {
     const element = containerRef.current;
@@ -85,38 +86,14 @@ export function LazyWorkoutVideo({ path, poster, className }: LazyWorkoutVideoPr
     };
   }, []);
 
-  useEffect(() => {
-    if (!shouldLoad) {
-      return;
-    }
-
-    const normalizedPath = path.trim().replace(/^\/+/, "");
-
-    if (!normalizedPath) {
-      return;
-    }
-
-    const controller = new AbortController();
-    let cancelled = false;
-
-    getSignedVideoUrl(normalizedPath, controller.signal)
-      .then((signedUrl) => {
-        if (!cancelled) {
-          setPlaybackSource(signedUrl);
-        }
-      })
-      .catch(() => {
-        // Keep poster fallback when signed URL cannot be generated.
-        if (!cancelled) {
-          setPlaybackSource(null);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
-  }, [path, shouldLoad]);
+  const { data: playbackSource } = useQuery({
+    queryKey: ["workout-video-url", normalizedPath],
+    queryFn: ({ signal }) => getSignedVideoUrl(normalizedPath, signal),
+    enabled: shouldLoad && normalizedPath.length > 0,
+    staleTime: 50 * 1000,
+    gcTime: 15 * 60 * 1000,
+    retry: 1,
+  });
 
   return (
     <div ref={containerRef} className={cn("relative overflow-hidden", className)}>

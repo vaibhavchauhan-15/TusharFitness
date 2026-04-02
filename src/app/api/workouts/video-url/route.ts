@@ -4,6 +4,9 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const VIDEO_BUCKET = "videos";
 const SIGNED_URL_TTL_SECONDS = 3600;
+const NO_STORE_HEADERS = {
+  "Cache-Control": "private, no-store",
+};
 
 type SignedVideoRequestBody = {
   path?: unknown;
@@ -24,12 +27,13 @@ function normalizeStoragePath(value: unknown) {
 }
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   const supabase = await createSupabaseServerClient();
 
   if (!supabase) {
-    return NextResponse.json({ error: "Supabase is not configured." }, { status: 503 });
+    return NextResponse.json({ error: "Supabase is not configured." }, { status: 503, headers: NO_STORE_HEADERS });
   }
 
   const {
@@ -37,7 +41,7 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: NO_STORE_HEADERS });
   }
 
   const body = (await request.json().catch(() => ({}))) as SignedVideoRequestBody;
@@ -48,7 +52,7 @@ export async function POST(request: Request) {
       {
         error: "Invalid video path.",
       },
-      { status: 400 },
+      { status: 400, headers: NO_STORE_HEADERS },
     );
   }
 
@@ -59,7 +63,7 @@ export async function POST(request: Request) {
       {
         error: "Supabase admin client is not configured.",
       },
-      { status: 503 },
+      { status: 503, headers: NO_STORE_HEADERS },
     );
   }
 
@@ -72,7 +76,7 @@ export async function POST(request: Request) {
       {
         error: error?.message || "Unable to generate video URL.",
       },
-      { status: 500 },
+      { status: 500, headers: NO_STORE_HEADERS },
     );
   }
 
@@ -83,7 +87,7 @@ export async function POST(request: Request) {
     },
     {
       headers: {
-        "Cache-Control": "private, no-store",
+        ...NO_STORE_HEADERS,
       },
     },
   );

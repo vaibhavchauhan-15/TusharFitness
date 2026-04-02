@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -35,6 +36,13 @@ type MeasurementLogPoint = {
   value: number;
 };
 
+type AnalyticsLogsResponse = {
+  weightLogs?: Array<{ month: string; bodyWeight: number }>;
+  strengthData?: Array<{ lift: string; current: number; previous: number }>;
+  measurementData?: Array<{ label: string; value: number }>;
+  error?: string;
+};
+
 const MEASUREMENT_OPTIONS: OptionSelectorOption[] = [
   { value: "Chest", label: "Chest" },
   { value: "Shoulders", label: "Shoulders" },
@@ -43,79 +51,62 @@ const MEASUREMENT_OPTIONS: OptionSelectorOption[] = [
   { value: "Biceps", label: "Biceps" },
 ];
 
+const ANALYTICS_LOGS_QUERY_KEY = ["analytics", "logs"] as const;
+
+async function fetchAnalyticsLogs() {
+  const response = await fetch("/api/analytics/logs", {
+    method: "GET",
+    cache: "no-store",
+  });
+
+  const data = (await response.json().catch(() => ({}))) as AnalyticsLogsResponse;
+
+  if (!response.ok) {
+    throw new Error(data.error ?? "Could not load analytics logs.");
+  }
+
+  return data;
+}
+
 export function AnalyticsOverview() {
-  const [weightLogs, setWeightLogs] = useState<WeightLogPoint[]>([]);
+  const queryClient = useQueryClient();
   const [weightInput, setWeightInput] = useState("");
-  const [measurements, setMeasurements] = useState<MeasurementLogPoint[]>([]);
-  const [strengthLogs, setStrengthLogs] = useState<StrengthLogPoint[]>([]);
   const [liftName, setLiftName] = useState("Bench Press");
   const [liftInput, setLiftInput] = useState("");
   const [measurementLabel, setMeasurementLabel] = useState("Chest");
   const [measurementInput, setMeasurementInput] = useState("");
-  const [syncing, setSyncing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
+  const logsQuery = useQuery({
+    queryKey: ANALYTICS_LOGS_QUERY_KEY,
+    queryFn: fetchAnalyticsLogs,
+    staleTime: 0,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true,
+  });
 
-    async function loadLogs() {
-      setSyncing(true);
-      setErrorMessage(null);
+  const syncing = logsQuery.isFetching;
+  const queryErrorMessage =
+    logsQuery.error instanceof Error ? logsQuery.error.message : "Could not sync analytics.";
+  const resolvedErrorMessage = errorMessage ?? (logsQuery.error ? queryErrorMessage : null);
 
-      try {
-        const response = await fetch("/api/analytics/logs", {
-          method: "GET",
-        });
+  const weightLogs: WeightLogPoint[] = useMemo(() => {
+    const source = Array.isArray(logsQuery.data?.weightLogs) ? logsQuery.data.weightLogs : [];
 
-        if (!response.ok) {
-          throw new Error("Could not load analytics logs.");
-        }
+    return source.map((item, index) => ({
+      month: item.month,
+      bodyWeight: item.bodyWeight,
+      weightLifted: index * 15,
+    }));
+  }, [logsQuery.data]);
 
-        const data = (await response.json()) as {
-          weightLogs?: Array<{ month: string; bodyWeight: number }>;
-          strengthData?: Array<{ lift: string; current: number; previous: number }>;
-          measurementData?: Array<{ label: string; value: number }>;
-        };
+  const strengthLogs: StrengthLogPoint[] = useMemo(() => {
+    return Array.isArray(logsQuery.data?.strengthData) ? logsQuery.data.strengthData : [];
+  }, [logsQuery.data]);
 
-        if (cancelled) {
-          return;
-        }
-
-        if (Array.isArray(data.weightLogs)) {
-          const lastLift = 0;
-          setWeightLogs(
-            data.weightLogs.map((item, index) => ({
-              month: item.month,
-              bodyWeight: item.bodyWeight,
-              weightLifted: lastLift + index * 15,
-            })),
-          );
-        }
-
-        if (Array.isArray(data.strengthData)) {
-          setStrengthLogs(data.strengthData);
-        }
-
-        if (Array.isArray(data.measurementData)) {
-          setMeasurements(data.measurementData);
-        }
-      } catch (error) {
-        if (!cancelled) {
-          setErrorMessage(error instanceof Error ? error.message : "Could not sync analytics.");
-        }
-      } finally {
-        if (!cancelled) {
-          setSyncing(false);
-        }
-      }
-    }
-
-    void loadLogs();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const measurements: MeasurementLogPoint[] = useMemo(() => {
+    return Array.isArray(logsQuery.data?.measurementData) ? logsQuery.data.measurementData : [];
+  }, [logsQuery.data]);
 
   const liftOptions = useMemo(() => {
     const base = ["Bench Press", "Squat", "Deadlift", "Overhead Press"];
@@ -133,6 +124,7 @@ export function AnalyticsOverview() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),
+      cache: "no-store",
     });
 
     const data = (await response.json().catch(() => ({}))) as { error?: string };
@@ -149,25 +141,24 @@ export function AnalyticsOverview() {
       return;
     }
 
-    setSyncing(true);
     setErrorMessage(null);
 
     try {
       await postLog({ type: "weight", valueKg: parsed });
 
-      setWeightLogs((current) => [
-        ...current.slice(-11),
-        {
-          month: "Now",
-          bodyWeight: parsed,
-          weightLifted: current.at(-1)?.weightLifted ?? 0,
-        },
-      ]);
+      queryClient.setQueryData<AnalyticsLogsResponse>(ANALYTICS_LOGS_QUERY_KEY, (current) => {
+        const currentWeightLogs = Array.isArray(current?.weightLogs) ? current.weightLogs : [];
+
+        return {
+          ...current,
+          weightLogs: [...currentWeightLogs.slice(-11), { month: "Now", bodyWeight: parsed }],
+        };
+      });
+
       setWeightInput("");
+      await queryClient.invalidateQueries({ queryKey: ANALYTICS_LOGS_QUERY_KEY });
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Could not save weight log.");
-    } finally {
-      setSyncing(false);
     }
   }
 
@@ -178,30 +169,36 @@ export function AnalyticsOverview() {
       return;
     }
 
-    setSyncing(true);
     setErrorMessage(null);
 
     try {
       await postLog({ type: "strength", lift: liftName, valueKg: parsed });
 
-      setStrengthLogs((current) => {
-        const existing = current.find((item) => item.lift === liftName);
+      queryClient.setQueryData<AnalyticsLogsResponse>(ANALYTICS_LOGS_QUERY_KEY, (current) => {
+        const currentStrengthData = Array.isArray(current?.strengthData) ? current.strengthData : [];
+        const existing = currentStrengthData.find((item) => item.lift === liftName);
 
         if (!existing) {
-          return [...current, { lift: liftName, current: parsed, previous: parsed }];
+          return {
+            ...current,
+            strengthData: [...currentStrengthData, { lift: liftName, current: parsed, previous: parsed }],
+          };
         }
 
-        return current.map((item) =>
-          item.lift === liftName
-            ? { ...item, previous: item.current, current: parsed }
-            : item,
-        );
+        return {
+          ...current,
+          strengthData: currentStrengthData.map((item) =>
+            item.lift === liftName
+              ? { ...item, previous: item.current, current: parsed }
+              : item,
+          ),
+        };
       });
+
       setLiftInput("");
+      await queryClient.invalidateQueries({ queryKey: ANALYTICS_LOGS_QUERY_KEY });
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Could not save strength log.");
-    } finally {
-      setSyncing(false);
     }
   }
 
@@ -212,28 +209,36 @@ export function AnalyticsOverview() {
       return;
     }
 
-    setSyncing(true);
     setErrorMessage(null);
 
     try {
       await postLog({ type: "measurement", label: measurementLabel, value: parsed });
 
-      setMeasurements((current) => {
-        const existing = current.find((item) => item.label === measurementLabel);
+      queryClient.setQueryData<AnalyticsLogsResponse>(ANALYTICS_LOGS_QUERY_KEY, (current) => {
+        const currentMeasurementData = Array.isArray(current?.measurementData)
+          ? current.measurementData
+          : [];
+        const existing = currentMeasurementData.find((item) => item.label === measurementLabel);
 
         if (!existing) {
-          return [...current, { label: measurementLabel, value: parsed }];
+          return {
+            ...current,
+            measurementData: [...currentMeasurementData, { label: measurementLabel, value: parsed }],
+          };
         }
 
-        return current.map((item) =>
-          item.label === measurementLabel ? { ...item, value: parsed } : item,
-        );
+        return {
+          ...current,
+          measurementData: currentMeasurementData.map((item) =>
+            item.label === measurementLabel ? { ...item, value: parsed } : item,
+          ),
+        };
       });
+
       setMeasurementInput("");
+      await queryClient.invalidateQueries({ queryKey: ANALYTICS_LOGS_QUERY_KEY });
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Could not save measurement log.");
-    } finally {
-      setSyncing(false);
     }
   }
 
@@ -245,9 +250,9 @@ export function AnalyticsOverview() {
         <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
           This startup page gives users a clean place to log progress, review monthly changes, and stay motivated with visible strength movement.
         </p>
-        {errorMessage ? (
+        {resolvedErrorMessage ? (
           <p className="mt-3 rounded-2xl border border-(--card-border) bg-(--surface-strong) px-4 py-3 text-sm text-muted-foreground">
-            {errorMessage}
+            {resolvedErrorMessage}
           </p>
         ) : null}
       </div>

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getUsernameSuggestions, normalizeUsername } from "@/lib/supabase/profile";
 
+export const dynamic = "force-dynamic";
+
 function toUsernameCandidates(value: string, seed: string) {
   const normalized = normalizeUsername(value);
   const baseSuggestions = getUsernameSuggestions(seed || normalized, {

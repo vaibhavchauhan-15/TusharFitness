@@ -1,3 +1,6 @@
+import { unstable_cache } from "next/cache";
+import { CACHE_TAGS, CACHE_TTL } from "@/lib/cache-tags";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type WorkoutPlanView = {
@@ -156,6 +159,31 @@ function mapDietPlanRow(row: DietPlanRow): DietPlanView {
   };
 }
 
+async function fetchDietPlanRowsWithAdminClient() {
+  const adminClient = createSupabaseAdminClient();
+
+  if (!adminClient) {
+    return null;
+  }
+
+  const { data, error } = await adminClient
+    .from("diet_plans")
+    .select("id,title,category,calories,protein,carbs,fats,diet_meals(meal_name,meal_time,items)")
+    .order("title", { ascending: true })
+    .returns<DietPlanRow[]>();
+
+  if (error) {
+    return null;
+  }
+
+  return data ?? [];
+}
+
+const getCachedDietPlanRows = unstable_cache(async () => fetchDietPlanRowsWithAdminClient(), ["diet-plans-v1"], {
+  tags: [CACHE_TAGS.dietPlans],
+  revalidate: CACHE_TTL.dietPlansSeconds,
+});
+
 export async function getWorkoutPlansForUser() {
   const supabase = await createSupabaseServerClient();
 
@@ -197,6 +225,12 @@ export async function getDietPlansForUser() {
 
   if (!user) {
     return [] as DietPlanView[];
+  }
+
+  const cachedRows = await getCachedDietPlanRows();
+
+  if (cachedRows) {
+    return cachedRows.map(mapDietPlanRow);
   }
 
   const { data, error } = await supabase

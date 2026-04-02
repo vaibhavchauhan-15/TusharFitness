@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { getLevelFromXp } from "@/lib/gamification";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+const NO_STORE_HEADERS = {
+  "Cache-Control": "private, no-store",
+};
+
+export const dynamic = "force-dynamic";
+
 const REFERRAL_TRIAL_DAYS = 3;
 const REFERRAL_XP = 60;
 
@@ -93,7 +99,7 @@ export async function POST(request: Request) {
   if (!supabase) {
     return NextResponse.json(
       { error: "Supabase is not configured." },
-      { status: 503 },
+      { status: 503, headers: NO_STORE_HEADERS },
     );
   }
 
@@ -102,14 +108,14 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: NO_STORE_HEADERS });
   }
 
   const { referralCode } = (await request.json()) as { referralCode?: string };
   const normalizedCode = referralCode?.trim().toLowerCase();
 
   if (!normalizedCode) {
-    return NextResponse.json({ error: "Referral code is required." }, { status: 400 });
+    return NextResponse.json({ error: "Referral code is required." }, { status: 400, headers: NO_STORE_HEADERS });
   }
 
   const { data: currentProfile, error: currentProfileError } = await supabase
@@ -121,14 +127,14 @@ export async function POST(request: Request) {
   if (currentProfileError || !currentProfile) {
     return NextResponse.json(
       { error: "Profile not found for current user." },
-      { status: 404 },
+      { status: 404, headers: NO_STORE_HEADERS },
     );
   }
 
   if (currentProfile.referral_code === normalizedCode) {
     return NextResponse.json(
       { success: false, message: "You cannot redeem your own referral code." },
-      { status: 400 },
+      { status: 400, headers: NO_STORE_HEADERS },
     );
   }
 
@@ -141,7 +147,7 @@ export async function POST(request: Request) {
   if (inviterError || !inviterProfile) {
     return NextResponse.json(
       { success: false, message: "Referral code not found." },
-      { status: 404 },
+      { status: 404, headers: NO_STORE_HEADERS },
     );
   }
 
@@ -154,7 +160,7 @@ export async function POST(request: Request) {
   if (existingReferral?.id) {
     return NextResponse.json(
       { success: false, message: "Referral already redeemed for this account." },
-      { status: 409 },
+      { status: 409, headers: NO_STORE_HEADERS },
     );
   }
 
@@ -174,7 +180,7 @@ export async function POST(request: Request) {
   if (insertError) {
     return NextResponse.json(
       { success: false, message: "Could not redeem referral code." },
-      { status: 500 },
+      { status: 500, headers: NO_STORE_HEADERS },
     );
   }
 
@@ -185,9 +191,14 @@ export async function POST(request: Request) {
     extendSubscriptionForUser(supabase, user.id, REFERRAL_TRIAL_DAYS),
   ]);
 
-  return NextResponse.json({
-    success: true,
-    message: "Referral applied. Both users earned bonus XP and trial extension.",
-  });
+  return NextResponse.json(
+    {
+      success: true,
+      message: "Referral applied. Both users earned bonus XP and trial extension.",
+    },
+    {
+      headers: NO_STORE_HEADERS,
+    },
+  );
 
 }

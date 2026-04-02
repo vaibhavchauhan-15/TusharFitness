@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 
+export const dynamic = "force-dynamic";
+
 type LoginPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };

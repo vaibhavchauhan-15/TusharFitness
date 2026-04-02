@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+const NO_STORE_HEADERS = {
+  "Cache-Control": "private, no-store",
+};
+
+export const dynamic = "force-dynamic";
+
 type WeightLogRow = {
   value_kg: number;
   logged_at: string;
@@ -54,7 +60,7 @@ export async function GET() {
   const context = await getAuthedSupabaseContext();
 
   if (!context) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: NO_STORE_HEADERS });
   }
 
   const { supabase, user } = context;
@@ -115,18 +121,23 @@ export async function GET() {
     value: Number(row.value),
   }));
 
-  return NextResponse.json({
-    weightLogs,
-    strengthData,
-    measurementData,
-  });
+  return NextResponse.json(
+    {
+      weightLogs,
+      strengthData,
+      measurementData,
+    },
+    {
+      headers: NO_STORE_HEADERS,
+    },
+  );
 }
 
 export async function POST(request: Request) {
   const context = await getAuthedSupabaseContext();
 
   if (!context) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: NO_STORE_HEADERS });
   }
 
   const { supabase, user } = context;
@@ -136,7 +147,7 @@ export async function POST(request: Request) {
     const valueKg = Number(payload.valueKg);
 
     if (!Number.isFinite(valueKg) || valueKg <= 0) {
-      return NextResponse.json({ error: "Invalid weight value." }, { status: 400 });
+      return NextResponse.json({ error: "Invalid weight value." }, { status: 400, headers: NO_STORE_HEADERS });
     }
 
     await Promise.all([
@@ -144,7 +155,7 @@ export async function POST(request: Request) {
       supabase.from("profiles").update({ weight_kg: valueKg }).eq("id", user.id),
     ]);
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true }, { headers: NO_STORE_HEADERS });
   }
 
   if (payload.type === "strength") {
@@ -152,7 +163,7 @@ export async function POST(request: Request) {
     const valueKg = Number(payload.valueKg);
 
     if (!lift || !Number.isFinite(valueKg) || valueKg <= 0) {
-      return NextResponse.json({ error: "Invalid strength payload." }, { status: 400 });
+      return NextResponse.json({ error: "Invalid strength payload." }, { status: 400, headers: NO_STORE_HEADERS });
     }
 
     await supabase.from("strength_logs").insert({
@@ -161,7 +172,7 @@ export async function POST(request: Request) {
       value_kg: valueKg,
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true }, { headers: NO_STORE_HEADERS });
   }
 
   if (payload.type === "measurement") {
@@ -169,7 +180,7 @@ export async function POST(request: Request) {
     const value = Number(payload.value);
 
     if (!label || !Number.isFinite(value) || value <= 0) {
-      return NextResponse.json({ error: "Invalid measurement payload." }, { status: 400 });
+      return NextResponse.json({ error: "Invalid measurement payload." }, { status: 400, headers: NO_STORE_HEADERS });
     }
 
     await supabase.from("measurement_logs").insert({
@@ -178,8 +189,8 @@ export async function POST(request: Request) {
       value,
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true }, { headers: NO_STORE_HEADERS });
   }
 
-  return NextResponse.json({ error: "Unsupported log type." }, { status: 400 });
+  return NextResponse.json({ error: "Unsupported log type." }, { status: 400, headers: NO_STORE_HEADERS });
 }

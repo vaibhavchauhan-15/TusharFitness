@@ -1,6 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { requireAdminSession } from "@/lib/admin/permissions";
 import {
@@ -155,6 +156,7 @@ export async function createDietPlanAction(formData: FormData) {
   });
 
   revalidatePath("/app/admin/diet-plans");
+  revalidateTag(CACHE_TAGS.dietPlans, "max");
 }
 
 export async function createWorkoutProgramAction(formData: FormData) {
@@ -241,6 +243,8 @@ export async function createWorkoutProgramAction(formData: FormData) {
   revalidatePath("/app/admin/workouts");
   revalidatePath("/app/workouts");
   revalidatePath("/app/workouts/exercises");
+  revalidateTag(CACHE_TAGS.workoutExercises, "max");
+  revalidateTag(CACHE_TAGS.workoutsCatalog, "max");
 }
 
 export async function createExerciseLibraryAction(formData: FormData) {
@@ -313,6 +317,8 @@ export async function createExerciseLibraryAction(formData: FormData) {
   revalidatePath("/app/admin/exercise-library");
   revalidatePath("/app/workouts");
   revalidatePath("/app/workouts/exercises");
+  revalidateTag(CACHE_TAGS.workoutExercises, "max");
+  revalidateTag(CACHE_TAGS.workoutsCatalog, "max");
 }
 
 export async function createCategoryAction(formData: FormData) {
@@ -499,6 +505,7 @@ export async function setDietPlanStatusAction(planId: string, nextStatus: "draft
   });
 
   revalidatePath("/app/admin/diet-plans");
+  revalidateTag(CACHE_TAGS.dietPlans, "max");
 }
 
 export async function setWorkoutStatusAction(

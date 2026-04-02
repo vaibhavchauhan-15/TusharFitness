@@ -7,6 +7,7 @@ import {
 } from "@/lib/supabase/workouts";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 function normalizeSlug(value: string | null) {
   if (!value) {

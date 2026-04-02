@@ -3,6 +3,10 @@ import Razorpay from "razorpay";
 import { env, isRazorpayConfigured } from "@/lib/env";
 import { getSessionState } from "@/lib/session";
 
+const NO_STORE_HEADERS = {
+  "Cache-Control": "private, no-store",
+};
+
 const defaultPlan = {
   id: "pro_monthly",
   amount: 49900,
@@ -16,23 +20,29 @@ type CheckoutRequestBody = {
 };
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   const session = await getSessionState();
 
   if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: NO_STORE_HEADERS });
   }
 
   const body = (await request.json().catch(() => ({}))) as CheckoutRequestBody;
   const runtimeCheckoutConfigId = body.checkoutConfigId?.trim();
 
   if (!isRazorpayConfigured) {
-    return NextResponse.json({
-      mode: "demo",
-      message:
-        "Razorpay keys are not configured yet. Connect keys to activate live checkout.",
-    });
+    return NextResponse.json(
+      {
+        mode: "demo",
+        message:
+          "Razorpay keys are not configured yet. Connect keys to activate live checkout.",
+      },
+      {
+        headers: NO_STORE_HEADERS,
+      },
+    );
   }
 
   const razorpay = new Razorpay({
@@ -60,19 +70,24 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({
-      mode: "live",
-      orderId: order.id,
-      amount: order.amount,
-      currency: order.currency,
-      name: defaultPlan.name,
-      description: defaultPlan.description,
-      prefill: {
-        name: session.user.name,
-        email: session.user.email,
+    return NextResponse.json(
+      {
+        mode: "live",
+        orderId: order.id,
+        amount: order.amount,
+        currency: order.currency,
+        name: defaultPlan.name,
+        description: defaultPlan.description,
+        prefill: {
+          name: session.user.name,
+          email: session.user.email,
+        },
+        keyId: env.razorpayKeyId,
       },
-      keyId: env.razorpayKeyId,
-    });
+      {
+        headers: NO_STORE_HEADERS,
+      },
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Razorpay order creation failed.";
 
@@ -80,7 +95,7 @@ export async function POST(request: Request) {
       {
         error: message,
       },
-      { status: 502 },
+      { status: 502, headers: NO_STORE_HEADERS },
     );
   }
 }

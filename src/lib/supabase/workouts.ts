@@ -1,3 +1,6 @@
+import { unstable_cache } from "next/cache";
+import { CACHE_TAGS, CACHE_TTL } from "@/lib/cache-tags";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   WORKOUT_BODY_PART_SPECS,
@@ -117,6 +120,40 @@ async function fetchWorkoutExerciseRows(supabase: SupabaseServerClient) {
     error: result.error,
   };
 }
+
+async function fetchWorkoutExerciseRowsWithAdminClient() {
+  const adminClient = createSupabaseAdminClient();
+
+  if (!adminClient) {
+    return null;
+  }
+
+  const { data, error } = await adminClient
+    .from("workout_exercises")
+    .select(
+      "id,goal,body_part_slug,title,thumbnail_url,video_path,target_muscle,equipment,difficulty,sets,reps,instruction_steps,form_cues,common_mistakes,rest_seconds,created_at",
+    )
+    .not("goal", "is", null)
+    .not("body_part_slug", "is", null)
+    .order("created_at", { ascending: true })
+    .order("title", { ascending: true })
+    .returns<WorkoutExerciseRow[]>();
+
+  if (error) {
+    return null;
+  }
+
+  return data ?? [];
+}
+
+const getCachedWorkoutExerciseRows = unstable_cache(
+  async () => fetchWorkoutExerciseRowsWithAdminClient(),
+  ["workout-exercises-v1"],
+  {
+    tags: [CACHE_TAGS.workoutExercises, CACHE_TAGS.workoutsCatalog],
+    revalidate: CACHE_TTL.workoutsCatalogSeconds,
+  },
+);
 
 function toStringList(value: unknown, fallback: string[]) {
   if (!Array.isArray(value)) {
@@ -293,7 +330,10 @@ export async function getWorkoutCatalogForUser(): Promise<WorkoutCatalog> {
 export async function getWorkoutCatalogForAuthenticatedClient(
   supabase: SupabaseServerClient,
 ): Promise<WorkoutCatalog> {
-  const exercisesResult = await fetchWorkoutExerciseRows(supabase);
+  const cachedRows = await getCachedWorkoutExerciseRows();
+  const exercisesResult = cachedRows
+    ? { data: cachedRows, error: null }
+    : await fetchWorkoutExerciseRows(supabase);
 
   const exercises = exercisesResult.error
     ? []

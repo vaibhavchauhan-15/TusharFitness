@@ -3,6 +3,12 @@ import Groq from "groq-sdk";
 import { env, isGroqConfigured } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+const NO_STORE_HEADERS = {
+  "Cache-Control": "private, no-store",
+};
+
+export const dynamic = "force-dynamic";
+
 type Payload = {
   sessionId?: string;
   messages: { role: "assistant" | "user"; content: string }[];
@@ -82,7 +88,7 @@ export async function GET() {
   const context = await getAuthedSupabaseContext();
 
   if (!context) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: NO_STORE_HEADERS });
   }
 
   const { supabase, user } = context;
@@ -96,7 +102,7 @@ export async function GET() {
     .maybeSingle<{ id: string }>();
 
   if (!latestSession?.id) {
-    return NextResponse.json({ sessionId: null, messages: [] });
+    return NextResponse.json({ sessionId: null, messages: [] }, { headers: NO_STORE_HEADERS });
   }
 
   const { data: messages } = await supabase
@@ -106,20 +112,25 @@ export async function GET() {
     .order("created_at", { ascending: true })
     .returns<Array<{ role: "assistant" | "user" | "system"; content: string }>>();
 
-  return NextResponse.json({
-    sessionId: latestSession.id,
-    messages: (messages ?? []).filter(
-      (message): message is { role: "assistant" | "user"; content: string } =>
-        message.role === "assistant" || message.role === "user",
-    ),
-  });
+  return NextResponse.json(
+    {
+      sessionId: latestSession.id,
+      messages: (messages ?? []).filter(
+        (message): message is { role: "assistant" | "user"; content: string } =>
+          message.role === "assistant" || message.role === "user",
+      ),
+    },
+    {
+      headers: NO_STORE_HEADERS,
+    },
+  );
 }
 
 export async function POST(request: Request) {
   const context = await getAuthedSupabaseContext();
 
   if (!context) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: NO_STORE_HEADERS });
   }
 
   const { supabase, user } = context;
@@ -129,14 +140,14 @@ export async function POST(request: Request) {
   if (!latestUserMessage?.content?.trim()) {
     return NextResponse.json(
       { error: "Message content is required." },
-      { status: 400 },
+      { status: 400, headers: NO_STORE_HEADERS },
     );
   }
 
   if (!isGroqConfigured) {
     return NextResponse.json(
       { error: "GROQ_API_KEY is not configured." },
-      { status: 503 },
+      { status: 503, headers: NO_STORE_HEADERS },
     );
   }
 
@@ -167,7 +178,7 @@ export async function POST(request: Request) {
   if (!reply) {
     return NextResponse.json(
       { error: "Groq returned an empty response." },
-      { status: 502 },
+      { status: 502, headers: NO_STORE_HEADERS },
     );
   }
 
@@ -184,8 +195,13 @@ export async function POST(request: Request) {
     },
   ]);
 
-  return NextResponse.json({
-    sessionId,
-    reply,
-  });
+  return NextResponse.json(
+    {
+      sessionId,
+      reply,
+    },
+    {
+      headers: NO_STORE_HEADERS,
+    },
+  );
 }

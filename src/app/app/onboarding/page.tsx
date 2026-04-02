@@ -10,6 +10,8 @@ import { isActiveAdminUser } from "@/lib/admin/access";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ensureProfileForUser, normalizeUsername } from "@/lib/supabase/profile";
 
+export const dynamic = "force-dynamic";
+
 type OnboardingPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
