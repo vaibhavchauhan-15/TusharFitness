@@ -281,7 +281,7 @@ export function ChatWorkspace({
     textarea.style.height = "0px";
 
     const maxHeight = 184;
-    const nextHeight = Math.max(40, Math.min(textarea.scrollHeight, maxHeight));
+    const nextHeight = Math.max(36, Math.min(textarea.scrollHeight, maxHeight));
 
     textarea.style.height = `${nextHeight}px`;
     textarea.style.overflowY = textarea.scrollHeight > maxHeight ? "auto" : "hidden";
@@ -1199,7 +1199,6 @@ export function ChatWorkspace({
                           ) : (
                             <p className="whitespace-pre-wrap">{message.content}</p>
                           )}
-                          <p className="mt-2 text-[11px] text-(--muted-foreground)" suppressHydrationWarning>{formatSessionDate(message.createdAt)}</p>
                         </div>
                       </motion.article>
                     );
@@ -1211,8 +1210,8 @@ export function ChatWorkspace({
 
           <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 px-3 pb-3 sm:px-5 sm:pb-4">
             <div className="pointer-events-auto mx-auto w-full max-w-[1120px] sm:w-[88%] xl:w-[70%]">
-              <div className="rounded-[30px] border border-(--card-border) bg-(--surface-strong)/95 px-3 py-2 shadow-[0_14px_36px_rgba(2,6,23,0.22)] backdrop-blur-md transition duration-150 ease-out focus-within:border-(--card-border) focus-within:shadow-[0_0_0_1px_color-mix(in_srgb,var(--ring)_65%,transparent),0_16px_36px_rgba(2,6,23,0.24)] sm:px-4">
-              <div className="flex items-end gap-2">
+              <div className="rounded-[30px] border border-(--card-border) bg-(--surface-strong)/95 px-3 py-1.5 shadow-[0_14px_36px_rgba(2,6,23,0.22)] backdrop-blur-md transition duration-150 ease-out focus-within:border-(--card-border) focus-within:shadow-[0_0_0_1px_color-mix(in_srgb,var(--ring)_65%,transparent),0_16px_36px_rgba(2,6,23,0.24)] sm:px-4">
+              <div className="relative">
                 <textarea
                   ref={composerTextareaRef}
                   value={draft}
@@ -1228,14 +1227,14 @@ export function ChatWorkspace({
                   }}
                   rows={1}
                   placeholder="Message TusharFitness AI..."
-                  className="chat-composer-textarea chat-scrollbar-compact min-h-10 w-full resize-none overflow-y-auto bg-transparent px-2 pt-[0.64rem] pb-[0.36rem] text-sm leading-5 outline-none focus-visible:shadow-none placeholder:text-(--muted-foreground)"
+                  className="chat-composer-textarea chat-scrollbar-compact min-h-9 w-full resize-none overflow-y-auto bg-transparent pl-2 pr-14 pt-[0.58rem] pb-[0.42rem] text-sm leading-5 outline-none focus-visible:shadow-none placeholder:text-(--muted-foreground)"
                 />
 
                 <Button
                   type="button"
                   size="icon"
                   variant={sending ? "destructive" : "primary"}
-                  className="h-10 w-10 shrink-0 self-end rounded-2xl"
+                  className="absolute right-1 bottom-1 h-9 w-9 shrink-0 rounded-2xl"
                   onClick={() => {
                     if (sending) {
                       handleStopGenerating();
