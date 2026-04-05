@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   HiBars3BottomLeft,
+  HiMiniSparkles,
   HiOutlineArrowTrendingUp,
   HiOutlineChartBarSquare,
   HiOutlineClipboardDocumentList,
@@ -16,7 +17,6 @@ import {
 } from "react-icons/hi2";
 import { motion } from "framer-motion";
 import { signOutAction } from "@/app/actions";
-import { FloatingAiAssistant } from "@/components/ai/floating-ai-assistant";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { Button } from "@/components/ui/button";
@@ -238,7 +238,9 @@ export function AppShell({ children, user, isAdmin = false }: AppShellProps) {
         <div className="flex min-h-screen min-w-0 flex-1 flex-col">
           <div className="glass-panel mb-4 flex items-center justify-between rounded-[28px] px-4 py-3 lg:hidden">
             <Logo />
-            <ThemeToggle />
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+            </div>
           </div>
 
           <main className="min-w-0 flex-1">
@@ -250,10 +252,18 @@ export function AppShell({ children, user, isAdmin = false }: AppShellProps) {
               {children}
             </motion.div>
           </main>
+
+          <Link
+            href="/chat"
+            className="fixed bottom-6 right-4 z-50 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-white shadow-[0_20px_45px_rgba(249,115,22,0.4)] transition hover:scale-[1.02] xl:right-8"
+            aria-label="Open AI chat page"
+            title="Open AI chat"
+          >
+            <HiMiniSparkles className="h-7 w-7" />
+          </Link>
         </div>
       </div>
 
-      <FloatingAiAssistant username={user.username} />
     </div>
   );
 }

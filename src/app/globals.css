@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 :root {
   color-scheme: light;
@@ -296,6 +297,10 @@ p {
   box-shadow: 0 0 0 3px var(--ring);
 }
 
+.chat-composer-textarea:focus-visible {
+  box-shadow: none;
+}
+
 .glass-panel {
   background: var(--card);
   border: 1px solid var(--border);
@@ -420,6 +425,62 @@ p {
   display: none;
 }
 
+.chat-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--primary) 55%, var(--muted-foreground) 45%)
+    color-mix(in srgb, var(--surface-strong) 90%, transparent);
+}
+
+.chat-scrollbar::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-track {
+  background: color-mix(in srgb, var(--surface-strong) 90%, transparent);
+  border-radius: 999px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary) 82%, white),
+    color-mix(in srgb, var(--primary) 68%, var(--muted-foreground))
+  );
+  border: 2px solid color-mix(in srgb, var(--surface-strong) 90%, transparent);
+  border-radius: 999px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary) 90%, white),
+    color-mix(in srgb, var(--primary) 76%, var(--muted-foreground))
+  );
+}
+
+.chat-scrollbar-compact {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--primary) 45%, var(--muted-foreground) 55%) transparent;
+}
+
+.chat-scrollbar-compact::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-scrollbar-compact::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-scrollbar-compact::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--primary) 62%, var(--muted-foreground));
+  border-radius: 999px;
+}
+
+.chat-scrollbar-compact::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--primary) 72%, var(--muted-foreground));
+}
+
 .ai-markdown-table-wrap {
   -webkit-overflow-scrolling: touch;
 }
@@ -432,6 +493,46 @@ p {
 .ai-markdown-table th,
 .ai-markdown-table td {
   vertical-align: top;
+}
+
+.hljs {
+  color: #e2e8f0;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-section,
+.hljs-link {
+  color: #c4b5fd;
+}
+
+.hljs-title,
+.hljs-function .hljs-title,
+.hljs-type,
+.hljs-attr,
+.hljs-name {
+  color: #93c5fd;
+}
+
+.hljs-string,
+.hljs-meta,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+  color: #86efac;
+}
+
+.hljs-number,
+.hljs-variable,
+.hljs-template-variable {
+  color: #fdba74;
+}
+
+.hljs-comment,
+.hljs-quote,
+.hljs-deletion {
+  color: #94a3b8;
 }
 
 @media (max-width: 640px) {
