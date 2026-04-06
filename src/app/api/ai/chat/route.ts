@@ -15,6 +15,8 @@ const REQUEST_SCHEMA = z.object({
   message: z.string().trim().min(1).max(4000),
 });
 
+const CONTEXT_HISTORY_LIMIT = 10;
+
 const SYSTEM_PROMPT = `You are TusharFitness AI Coach for a fitness SaaS app.
 Provide practical, safe, and encouraging coaching about workouts, recovery, mobility, nutrition, sleep, and consistency.
 
@@ -271,7 +273,7 @@ export async function POST(request: Request) {
     session = createdSession;
   }
 
-  const { data: createdUserMessage, error: userMessageError } = await timer.measure("db_user_message", async () =>
+  const userMessagePromise = timer.measure("db_user_message", async () =>
     await supabase
       .from("ai_chat_messages")
       .insert({
@@ -283,19 +285,24 @@ export async function POST(request: Request) {
       .single<MessageRow>(),
   );
 
-  if (userMessageError || !createdUserMessage) {
-    return respondJson(timer, { error: "Could not store user message." }, { status: 500, headers: NO_STORE_HEADERS });
-  }
-
-  const { data: contextRows, error: contextError } = await timer.measure("db_context", async () =>
+  const contextPromise = timer.measure("db_context", async () =>
     await supabase
       .from("ai_chat_messages")
       .select("id, role, content, created_at")
       .eq("session_id", session.id)
       .order("created_at", { ascending: false })
-      .limit(24)
+      .limit(CONTEXT_HISTORY_LIMIT)
       .returns<MessageRow[]>(),
   );
+
+  const [{ data: createdUserMessage, error: userMessageError }, { data: contextRows, error: contextError }] = await Promise.all([
+    userMessagePromise,
+    contextPromise,
+  ]);
+
+  if (userMessageError || !createdUserMessage) {
+    return respondJson(timer, { error: "Could not store user message." }, { status: 500, headers: NO_STORE_HEADERS });
+  }
 
   if (contextError) {
     return respondJson(timer, { error: "Could not load chat context." }, { status: 500, headers: NO_STORE_HEADERS });
@@ -303,11 +310,17 @@ export async function POST(request: Request) {
 
   const contextMessages = [...(contextRows ?? [])]
     .reverse()
+    .filter((message) => message.id !== createdUserMessage.id)
     .filter((message) => message.role === "assistant" || message.role === "user")
     .map((message) => ({
       role: message.role,
       content: message.content,
     }));
+
+  contextMessages.push({
+    role: "user",
+    content: createdUserMessage.content,
+  });
 
   const groqClient = new Groq({
     apiKey: env.groqApiKey,

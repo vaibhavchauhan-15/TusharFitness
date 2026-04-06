@@ -301,6 +301,48 @@ p {
   box-shadow: none;
 }
 
+.chat-composer-shell {
+  border-radius: 24px;
+}
+
+.chat-composer-shell:focus-within {
+  border-color: color-mix(in srgb, var(--primary) 56%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 25%, transparent),
+    0 16px 36px rgba(2, 6, 23, 0.24);
+  transform: translateY(-2px);
+}
+
+.chat-new-chat-button {
+  border: 1px solid color-mix(in srgb, var(--primary) 70%, transparent);
+  background: var(--primary);
+  color: var(--primary-foreground);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--primary) 30%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 26%, transparent);
+  transition: background-color 170ms ease, border-color 170ms ease, box-shadow 200ms ease,
+    transform 200ms ease;
+}
+
+.chat-new-chat-button:hover {
+  background: var(--primary-hover);
+  border-color: color-mix(in srgb, var(--primary-hover) 78%, transparent);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--primary) 36%, transparent),
+    0 0 0 2px color-mix(in srgb, var(--primary) 24%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 30%, transparent);
+  transform: translateY(-1px);
+}
+
+.chat-new-chat-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 38%, transparent),
+    0 10px 24px color-mix(in srgb, var(--primary) 30%, transparent);
+}
+
+.chat-new-chat-button:active {
+  transform: translateY(0);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--primary) 28%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 20%, transparent);
+}
+
 .glass-panel {
   background: var(--card);
   border: 1px solid var(--border);
@@ -312,6 +354,141 @@ p {
   background: var(--surface);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-xs);
+}
+
+.recent-chat-card {
+  border: 1px solid var(--card-border);
+  background: var(--surface);
+  color: var(--muted-foreground);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--foreground) 3%, transparent);
+  transition: none;
+}
+
+.recent-chat-title {
+  color: color-mix(in srgb, var(--foreground) 78%, var(--muted-foreground));
+  transition: none;
+}
+
+.recent-chat-meta {
+  color: color-mix(in srgb, var(--foreground) 60%, var(--muted-foreground));
+  opacity: 0.98;
+  transition: none;
+}
+
+.recent-chat-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, var(--primary) 18%, transparent),
+    transparent 58%
+  );
+  transition: none;
+}
+
+.recent-chat-card:hover,
+.recent-chat-card:focus-within {
+  border-color: color-mix(in srgb, var(--primary) 44%, var(--card-border));
+  background: color-mix(in srgb, var(--surface-strong) 84%, var(--primary-soft) 16%);
+  color: var(--foreground);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 20%, transparent),
+    0 10px 22px color-mix(in srgb, var(--primary) 16%, transparent);
+  transform: translateY(-1px);
+}
+
+.recent-chat-card:hover .recent-chat-title,
+.recent-chat-card:focus-within .recent-chat-title {
+  color: var(--foreground);
+}
+
+.recent-chat-card:hover .recent-chat-meta,
+.recent-chat-card:focus-within .recent-chat-meta {
+  color: color-mix(in srgb, var(--foreground) 80%, var(--muted-foreground));
+}
+
+.recent-chat-card:hover::before,
+.recent-chat-card:focus-within::before {
+  opacity: 1;
+}
+
+.recent-chat-card[data-active="true"] {
+  border-color: color-mix(in srgb, var(--primary) 56%, var(--card-border));
+  background: color-mix(in srgb, var(--surface-strong) 72%, var(--primary-soft) 28%);
+  color: var(--foreground);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 24%, transparent),
+    0 8px 20px color-mix(in srgb, var(--primary) 14%, transparent);
+}
+
+.recent-chat-card[data-active="true"] .recent-chat-title {
+  color: var(--foreground);
+}
+
+.recent-chat-card[data-active="true"] .recent-chat-meta {
+  color: color-mix(in srgb, var(--foreground) 82%, var(--muted-foreground));
+}
+
+.recent-chat-card[data-active="true"]::before {
+  opacity: 0.82;
+}
+
+.recent-chat-card[data-disabled="true"] {
+  opacity: 0.72;
+  transform: none;
+}
+
+.recent-chat-card-actions {
+  pointer-events: none;
+}
+
+.recent-chat-card-action {
+  opacity: 0;
+  transform: translateY(3px) scale(0.96);
+  transition: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .recent-chat-card:hover .recent-chat-card-actions,
+  .recent-chat-card:focus-within .recent-chat-card-actions {
+    pointer-events: auto;
+  }
+
+  .recent-chat-card:hover .recent-chat-card-action,
+  .recent-chat-card:focus-within .recent-chat-card-action {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+}
+
+@media (hover: none), (pointer: coarse) {
+  .recent-chat-card-actions {
+    pointer-events: auto;
+  }
+
+  .recent-chat-card-action {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recent-chat-card,
+  .recent-chat-card::before,
+  .recent-chat-card-action {
+    transition: none;
+  }
+
+  .recent-chat-card:hover,
+  .recent-chat-card:focus-within {
+    transform: none;
+  }
+
+  .recent-chat-card-action {
+    transform: none;
+  }
 }
 
 .card {
@@ -481,8 +658,47 @@ p {
   background: color-mix(in srgb, var(--primary) 72%, var(--muted-foreground));
 }
 
+.recent-chats-scroll-area {
+  scroll-padding-bottom: 0.75rem;
+  scrollbar-gutter: stable;
+}
+
+.recent-chats-scroll-area::-webkit-scrollbar {
+  width: 8px;
+}
+
+.recent-chats-scroll-area::-webkit-scrollbar-track {
+  margin-block: 12px;
+  background: transparent;
+}
+
+.recent-chats-scroll-area::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
 .ai-markdown-table-wrap {
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--primary) 60%, var(--muted-foreground) 40%) transparent;
+}
+
+.ai-markdown-table-wrap::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+.ai-markdown-table-wrap::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ai-markdown-table-wrap::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--primary) 64%, var(--muted-foreground));
+  border-radius: 999px;
+}
+
+.ai-markdown-table-wrap::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--primary) 72%, var(--muted-foreground));
 }
 
 .ai-markdown-table {

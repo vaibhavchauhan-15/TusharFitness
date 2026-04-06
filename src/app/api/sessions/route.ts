@@ -46,14 +46,20 @@ function normalizePositiveInt(value: string | null, fallback: number, max: numbe
   return Math.min(max, parsed);
 }
 
-function normalizeNonNegativeInt(value: string | null, fallback: number, max: number) {
-  const parsed = Number.parseInt(String(value ?? "").trim(), 10);
+function normalizeCursor(value: string | null) {
+  const normalized = String(value ?? "").trim();
 
-  if (!Number.isFinite(parsed) || parsed < 0) {
-    return fallback;
+  if (!normalized) {
+    return null;
   }
 
-  return Math.min(max, parsed);
+  const parsed = Date.parse(normalized);
+
+  if (Number.isNaN(parsed)) {
+    return null;
+  }
+
+  return new Date(parsed).toISOString();
 }
 
 function normalizeTitle(value: string | null | undefined) {
@@ -136,25 +142,28 @@ export async function GET(request: Request) {
   }
 
   const url = new URL(request.url);
-  const limit = normalizePositiveInt(url.searchParams.get("limit"), 10, 25);
-  const offset = normalizeNonNegativeInt(url.searchParams.get("offset"), 0, 5000);
-  const rangeEnd = offset + limit - 1;
+  const limit = normalizePositiveInt(url.searchParams.get("limit"), 20, 30);
+  const cursor = normalizeCursor(url.searchParams.get("cursor"));
+
+  const baseQuery = supabase
+    .from("ai_chat_sessions")
+    .select("id, title, created_at")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(limit + 1);
+
+  const effectiveQuery = cursor ? baseQuery.lt("created_at", cursor) : baseQuery;
 
   const { data: sessions, error: sessionsError } = await timer.measure("db_sessions", async () =>
-    await supabase
-      .from("ai_chat_sessions")
-      .select("id, title, created_at")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .range(offset, rangeEnd)
-      .returns<SessionRow[]>(),
+    await effectiveQuery.returns<SessionRow[]>(),
   );
 
   if (sessionsError) {
     return respondJson(timer, { error: "Could not fetch sessions." }, { status: 500, headers: NO_STORE_HEADERS });
   }
 
-  const sessionRows = sessions ?? [];
+  const hasMore = (sessions?.length ?? 0) > limit;
+  const sessionRows = hasMore ? (sessions ?? []).slice(0, limit) : sessions ?? [];
   const sessionIds = sessionRows.map((session) => session.id);
 
   const lastActivityMap = new Map<string, string>();
@@ -194,17 +203,19 @@ export async function GET(request: Request) {
         createdAt: session.created_at,
         lastActivityAt,
       };
-    })
-    .sort((a, b) => {
-      const aTime = Date.parse(a.lastActivityAt) || 0;
-      const bTime = Date.parse(b.lastActivityAt) || 0;
-      return bTime - aTime;
     });
 
-  const hasMore = summarized.length === limit;
-  const nextOffset = hasMore ? offset + summarized.length : null;
+  const nextCursor = hasMore ? sessionRows.at(-1)?.created_at ?? null : null;
 
-  return respondJson(timer, { sessions: summarized, nextOffset, hasMore }, { headers: NO_STORE_HEADERS });
+  return respondJson(
+    timer,
+    {
+      sessions: summarized,
+      nextCursor,
+      hasMore: nextCursor !== null,
+    },
+    { headers: NO_STORE_HEADERS },
+  );
 }
 
 export async function POST(request: Request) {

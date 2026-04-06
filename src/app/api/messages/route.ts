@@ -108,7 +108,9 @@ export async function GET(request: Request) {
   }
 
   const limit = normalizePositiveInt(url.searchParams.get("limit"), 20, 100);
-  const beforeCursor = normalizeCursor(url.searchParams.get("before"));
+  const beforeCursor = normalizeCursor(
+    url.searchParams.get("cursor") ?? url.searchParams.get("before"),
+  );
 
   const { data: ownedSession, error: sessionError } = await timer.measure("db_session_auth", async () =>
     await supabase
