@@ -30,8 +30,8 @@ export default async function AdminProfilePage({
         title="Admin identity and operational context"
         subtitle="This profile blends your personal account data with role-level admin access details so you can operate both modes from one place."
         actions={[
-          { label: "Main Website", href: "/app/dashboard" },
-          { label: "Admin Settings", href: "/app/admin/settings" },
+          { label: "Main Website", href: "/dashboard" },
+          { label: "Admin Settings", href: "/admin/settings" },
         ]}
       />
 
@@ -67,13 +67,13 @@ export default async function AdminProfilePage({
 
           <div className="mt-4 space-y-2">
             <Link
-              href="/app/dashboard"
+              href="/dashboard"
               className="block rounded-2xl border border-(--card-border) bg-(--surface-strong) px-4 py-3 text-sm font-medium transition hover:bg-(--primary-soft)"
             >
               Open Main Website
             </Link>
             <Link
-              href="/app/admin/dashboard"
+              href="/admin/dashboard"
               className="block rounded-2xl border border-(--card-border) bg-(--surface-strong) px-4 py-3 text-sm font-medium transition hover:bg-(--primary-soft)"
             >
               Open Admin Page

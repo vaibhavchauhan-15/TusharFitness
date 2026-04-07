@@ -125,7 +125,7 @@ async function getOnboardingPrefill(): Promise<OnboardingPrefill> {
   const isAdmin = await isActiveAdminUser(supabase, user.id);
 
   if (isAdmin) {
-    redirect("/app/admin/dashboard");
+    redirect("/admin/dashboard");
   }
 
   const metadataUsername =

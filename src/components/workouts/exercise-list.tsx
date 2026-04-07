@@ -53,7 +53,7 @@ export function ExerciseList({
               >
                 <ExerciseCard
                   exercise={exercise}
-                  href={`/app/workouts/${exercise.slug}?goal=${selectedGoalSlug}&bodyPart=${selectedBodyPartSlug}`}
+                  href={`/workouts/${exercise.slug}?goal=${selectedGoalSlug}&bodyPart=${selectedBodyPartSlug}`}
                 />
               </motion.div>
             ))}

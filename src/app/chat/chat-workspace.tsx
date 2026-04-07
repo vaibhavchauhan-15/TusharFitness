@@ -1268,38 +1268,19 @@ export function ChatWorkspace({
     ].filter((group) => group.sessions.length > 0);
   }, [sessions]);
 
-  function renderRecentChatsSkeletonRows(count: number) {
-    return (
-      <div className="space-y-1.5" aria-hidden>
-        {Array.from({ length: count }).map((_, index) => (
-          <div
-            key={`recent-skeleton-${index}`}
-            className="rounded-xl border border-(--card-border) bg-surface px-3 py-2"
-          >
-            <div className="h-4 w-[72%] animate-pulse rounded-md bg-(--surface-strong)" />
-            <div className="mt-1.5 h-2.5 w-[42%] animate-pulse rounded-md bg-(--surface-strong)" />
-          </div>
-        ))}
-      </div>
-    );
-  }
-
   function renderRecentChatsList(options: { mobile: boolean }) {
     const { mobile } = options;
 
     return (
       <div
         className={cn(
-          "chat-scrollbar recent-chats-scroll-area flex flex-1 flex-col gap-3 overflow-y-auto overscroll-contain",
-          mobile ? "mt-3 pr-1 pb-6" : "h-full pr-2 pb-8",
+          "chat-scrollbar flex flex-1 flex-col gap-3 overflow-y-auto overscroll-contain",
+          mobile ? "mt-3 pb-3" : "h-full pr-1 pb-4",
         )}
       >
         {groupedSessions.map((group) => (
           <div key={group.label} className="space-y-1.5">
-            <p
-              className="px-1 font-semibold uppercase tracking-[0.14em] text-(--muted-foreground)"
-              style={{ fontSize: "14px", lineHeight: "20px" }}
-            >
+            <p className="px-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-(--muted-foreground)">
               {group.label}
             </p>
 
@@ -1310,10 +1291,11 @@ export function ChatWorkspace({
                 return (
                   <div
                     key={session.id}
-                    data-active={active}
-                    data-disabled={sending}
                     className={cn(
-                      "recent-chat-card group relative flex flex-col justify-center overflow-hidden rounded-xl px-3 py-2 text-left",
+                      "group relative flex flex-col justify-center overflow-hidden rounded-xl border px-3 py-2.5 text-left shadow-[inset_0_0_0_1px_rgba(255,255,255,0.02)] transition-colors duration-200",
+                      active
+                        ? "border-(--primary)/50 bg-(--primary-soft) text-(--foreground)"
+                        : "border-(--card-border) bg-surface text-(--muted-foreground) hover:border-(--primary)/40 hover:bg-(--surface-strong) hover:text-(--foreground)",
                       sending ? "opacity-70" : null,
                     )}
                   >
@@ -1325,22 +1307,25 @@ export function ChatWorkspace({
                       aria-label={`Open chat: ${clampSessionTitle(session.title)}`}
                     />
                     <div className="relative z-10 pointer-events-none pr-12">
-                      <p className={cn("recent-chat-title truncate text-[14px] leading-[1.2]", active ? "font-semibold" : "font-medium")}>
+                      <p className={cn("truncate text-[14px]", active ? "font-semibold text-(--primary-strong)" : "font-medium")}>
                         {clampSessionTitle(session.title)}
                       </p>
-                      <p
-                        className="recent-chat-meta mt-0.5"
-                        style={{ fontSize: "10px", lineHeight: "12px" }}
-                        suppressHydrationWarning
-                      >
+                      <p className="mt-0.5 text-[8px] opacity-70" suppressHydrationWarning>
                         {formatSessionDate(session.lastActivityAt)}
                       </p>
                     </div>
 
-                    <div className="recent-chat-card-actions absolute right-2 top-1/2 z-20 inline-flex -translate-y-1/2 items-center gap-1">
+                    <div
+                      className={cn(
+                        "absolute right-2 top-1/2 z-20 -translate-y-1/2 items-center gap-1",
+                        mobile
+                          ? "inline-flex"
+                          : "pointer-events-none inline-flex opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100",
+                      )}
+                    >
                       <button
                         type="button"
-                        className="recent-chat-card-action inline-flex h-7 w-7 items-center justify-center rounded-lg border border-(--card-border) bg-surface text-(--muted-foreground) transition hover:text-(--foreground)"
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-(--card-border) bg-surface text-(--muted-foreground) transition hover:text-(--foreground)"
                         onClick={() => openEditSessionDialog(session)}
                         aria-label="Edit recent chat title"
                         title="Edit"
@@ -1351,7 +1336,7 @@ export function ChatWorkspace({
 
                       <button
                         type="button"
-                        className="recent-chat-card-action inline-flex h-7 w-7 items-center justify-center rounded-lg border border-red-400/30 bg-red-500/8 text-red-300 transition hover:bg-red-500/20"
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-red-400/30 bg-red-500/8 text-red-300 transition hover:bg-red-500/20"
                         onClick={() => openDeleteSessionDialog(session)}
                         aria-label="Delete recent chat"
                         title="Delete"
@@ -1367,9 +1352,7 @@ export function ChatWorkspace({
           </div>
         ))}
 
-        {loadingMoreSessions ? renderRecentChatsSkeletonRows(3) : null}
-
-        {sessions.length === 0 && !loadingMoreSessions ? (
+        {sessions.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-(--card-border) bg-(--surface-strong) p-4 text-sm text-(--muted-foreground)">
             No recent chats yet. Start your first conversation.
           </div>
@@ -1378,9 +1361,10 @@ export function ChatWorkspace({
         {sessionsHasMore ? (
           <div
             ref={mobile ? mobileSessionsSentinelRef : desktopSessionsSentinelRef}
-            className="min-h-2"
-            aria-hidden
-          />
+            className="flex min-h-8 items-center justify-center rounded-lg text-xs text-(--muted-foreground)"
+          >
+            {loadingMoreSessions ? "Loading more chats..." : ""}
+          </div>
         ) : null}
       </div>
     );
@@ -1397,17 +1381,15 @@ export function ChatWorkspace({
         <aside className="glass-panel hidden h-full w-[320px] shrink-0 flex-col overflow-hidden rounded-[30px] border border-(--card-border) p-3 md:flex">
           <div className="mb-3 flex items-center justify-between gap-2 px-1">
             <div>
-              <h1 className="font-heading font-semibold" style={{ fontSize: "20px", lineHeight: "1.25" }}>
-                TusharFitness AI
-              </h1>
+              <h1 className="font-heading text-lg font-semibold">TusharFitness AI</h1>
             </div>
-            
+            <HiMiniSparkles className="h-5 w-5 text-(--primary)" />
           </div>
 
           <Button
             type="button"
             variant="primary"
-            className="chat-new-chat-button h-11 w-full justify-start rounded-xl font-medium"
+            className="h-11 w-full justify-start rounded-xl font-medium transition duration-200 hover:brightness-110"
             onClick={handleNewChat}
             disabled={sending}
           >
@@ -1416,12 +1398,7 @@ export function ChatWorkspace({
           </Button>
 
           <div className="mt-4 flex-1 overflow-hidden">
-            <p
-              className="mb-2 px-1 font-semibold uppercase tracking-[0.16em] text-(--muted-foreground)"
-              style={{ fontSize: "14px", lineHeight: "20px" }}
-            >
-              Recent chats
-            </p>
+            <p className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-(--muted-foreground)">Recent chats</p>
             {renderRecentChatsList({ mobile: false })}
           </div>
         </aside>
@@ -1447,9 +1424,7 @@ export function ChatWorkspace({
                 className="glass-panel fixed inset-y-3 left-3 z-50 flex w-[86vw] max-w-85 flex-col rounded-[30px] border border-(--card-border) p-3 md:hidden"
               >
                 <div className="mb-3 flex items-center justify-between">
-                  <p className="font-semibold" style={{ fontSize: "14px", lineHeight: "20px" }}>
-                    Recent chats
-                  </p>
+                  <p className="text-sm font-semibold">Recent chats</p>
                   <button
                     type="button"
                     className="rounded-xl p-2 text-(--muted-foreground) transition hover:bg-(--primary-soft) hover:text-(--foreground)"
@@ -1463,7 +1438,7 @@ export function ChatWorkspace({
                 <Button
                   type="button"
                   variant="primary"
-                  className="chat-new-chat-button h-11 w-full justify-start rounded-xl font-medium"
+                  className="h-11 w-full justify-start rounded-xl font-medium transition duration-200 hover:brightness-110"
                   onClick={handleNewChat}
                   disabled={sending}
                 >
@@ -1712,7 +1687,7 @@ export function ChatWorkspace({
 
           <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 px-3 pb-3 sm:px-5 sm:pb-4">
             <div className="pointer-events-auto mx-auto w-full max-w-280 sm:w-[88%] xl:w-[70%]">
-              <div className="chat-composer-shell rounded-3xl border border-(--card-border) bg-surface px-3 py-1.5 shadow-sm transition-all duration-150 ease-out focus-within:ring-1 focus-within:ring-(--primary)/50 sm:px-4 text-[15px]">
+              <div className="chat-composer-shell rounded-3xl border border-(--card-border) bg-surface px-3 py-1 shadow-sm transition-all duration-150 ease-out focus-within:ring-1 focus-within:ring-(--primary)/50 sm:px-4 text-[15px]">
               <div className="relative flex items-stretch gap-1.5">
                 <textarea
                   ref={composerTextareaRef}

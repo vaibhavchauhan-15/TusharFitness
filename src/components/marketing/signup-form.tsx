@@ -269,7 +269,7 @@ export function SignupForm({ initialUsername, initialSuggestions }: SignupFormPr
 
       <form action={signInWithGoogleAction}>
         <input type="hidden" name="source" value="signup" />
-        <input type="hidden" name="next" value="/app/onboarding" />
+        <input type="hidden" name="next" value="/onboarding" />
         <Button type="submit" variant="outline" className="w-full">
           Sign up with Google
         </Button>

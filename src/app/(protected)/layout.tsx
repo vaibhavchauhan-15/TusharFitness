@@ -21,7 +21,7 @@ export default async function ProtectedLayout({
   const isAdmin = supabase ? await isActiveAdminUser(supabase, session.user.id) : false;
 
   if (!session.onboardingCompleted && !isAdmin) {
-    redirect("/app/onboarding");
+    redirect("/onboarding");
   }
 
   if (!session.accessActive) {

@@ -90,7 +90,7 @@ export default async function WorkoutsExercisesPage({ searchParams }: WorkoutsEx
             </div>
 
             <Link
-              href={`/app/workouts?goal=${slice.selectedGoalSlug}&bodyPart=${slice.selectedBodyPartSlug}`}
+              href={`/workouts?goal=${slice.selectedGoalSlug}&bodyPart=${slice.selectedBodyPartSlug}`}
               className="inline-flex items-center rounded-full border border-(--card-border) bg-(--surface-strong) px-3 py-1.5 text-xs font-semibold text-muted-foreground transition hover:bg-(--primary-soft) hover:text-primary"
             >
               Back to body parts

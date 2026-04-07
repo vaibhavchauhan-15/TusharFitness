@@ -23,11 +23,11 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const appNavigation = [
-  { href: "/app/dashboard", label: "Dashboard", icon: "dashboard" },
-  { href: "/app/workouts", label: "Workouts", icon: "workout" },
-  { href: "/app/fuel", label: "Diet Plans", icon: "fuel" },
-  { href: "/app/analytics", label: "Analytics", icon: "analytics" },
-  { href: "/app/settings", label: "Settings", icon: "settings" },
+  { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
+  { href: "/workouts", label: "Workouts", icon: "workout" },
+  { href: "/fuel", label: "Diet Plans", icon: "fuel" },
+  { href: "/analytics", label: "Analytics", icon: "analytics" },
+  { href: "/settings", label: "Settings", icon: "settings" },
 ] as const;
 
 const iconMap = {
@@ -56,7 +56,7 @@ export function AppShell({ children, user, isAdmin = false }: AppShellProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const isAdminRoute = pathname.startsWith("/app/admin");
+  const isAdminRoute = pathname.startsWith("/admin");
   const displayName = user.name.trim() || user.email.split("@")[0] || "Athlete";
   const initials = displayName
     .split(" ")
@@ -102,7 +102,7 @@ export function AppShell({ children, user, isAdmin = false }: AppShellProps) {
           </div>
 
           <nav className={cn("flex flex-1 flex-col", collapsed ? "gap-1.5" : "gap-2")}>
-            {[...appNavigation, { href: `/app/profile/${user.username}`, label: "Profile", icon: "profile" }].map((item) => {
+            {[...appNavigation, { href: `/profile/${user.username}`, label: "Profile", icon: "profile" }].map((item) => {
               const Icon = iconMap[item.icon as keyof typeof iconMap];
               const active = pathname === item.href;
 
@@ -196,20 +196,20 @@ export function AppShell({ children, user, isAdmin = false }: AppShellProps) {
               >
                 <div className="space-y-2">
                   <Link
-                    href={`/app/profile/${user.username}`}
+                    href={`/profile/${user.username}`}
                     className="block rounded-2xl px-3 py-2 text-sm hover:bg-[var(--primary-soft)]"
                   >
                     User Profile
                   </Link>
                   <Link
-                    href="/app/settings"
+                    href="/settings"
                     className="block rounded-2xl px-3 py-2 text-sm hover:bg-[var(--primary-soft)]"
                   >
                     Settings
                   </Link>
                   {isAdmin ? (
                     <Link
-                      href="/app/admin/dashboard"
+                      href="/admin/dashboard"
                       className="block rounded-2xl px-3 py-2 text-sm hover:bg-[var(--primary-soft)]"
                     >
                       Switch to Admin Page
@@ -219,7 +219,7 @@ export function AppShell({ children, user, isAdmin = false }: AppShellProps) {
                     <ThemeToggle />
                   </div>
                   <Link
-                    href="/app/bmi-calculator"
+                    href="/bmi-calculator"
                     className="block rounded-2xl px-3 py-2 text-sm hover:bg-[var(--primary-soft)]"
                   >
                     BMI Calculation

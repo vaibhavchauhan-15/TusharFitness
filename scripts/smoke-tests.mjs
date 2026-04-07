@@ -125,13 +125,13 @@ function buildChecks() {
   const hasAdminSession = Boolean(adminSessionCookie);
 
   checks.push({
-    name: "Public: root redirects to app",
+    name: "Public: root redirects to dashboard",
     run: async () => {
       const response = await request("/");
       const location = response.headers.get("location") ?? "";
 
       ensure(REDIRECT_STATUSES.has(response.status), `Expected redirect status, got ${response.status}`);
-      ensure(location.startsWith("/app"), `Expected redirect to /app*, got ${location || "<none>"}`);
+      ensure(location.startsWith("/dashboard"), `Expected redirect to /dashboard, got ${location || "<none>"}`);
 
       return `${formatStatus(response.status)} -> ${location}`;
     },
@@ -149,7 +149,10 @@ function buildChecks() {
 
       const location = response.headers.get("location") ?? "";
       ensure(REDIRECT_STATUSES.has(response.status), `Expected redirect status, got ${response.status}`);
-      ensure(location.startsWith("/app"), `Expected redirect to /app*, got ${location || "<none>"}`);
+      ensure(
+        /^\/(dashboard|admin\/dashboard)/.test(location),
+        `Expected redirect to /dashboard or /admin/dashboard, got ${location || "<none>"}`,
+      );
       return `${formatStatus(response.status)} -> ${location}`;
     },
   });
@@ -166,7 +169,10 @@ function buildChecks() {
 
       const location = response.headers.get("location") ?? "";
       ensure(REDIRECT_STATUSES.has(response.status), `Expected redirect status, got ${response.status}`);
-      ensure(location.startsWith("/app"), `Expected redirect to /app*, got ${location || "<none>"}`);
+      ensure(
+        /^\/(dashboard|admin\/dashboard)/.test(location),
+        `Expected redirect to /dashboard or /admin/dashboard, got ${location || "<none>"}`,
+      );
       return `${formatStatus(response.status)} -> ${location}`;
     },
   });
@@ -234,10 +240,10 @@ function buildChecks() {
 
   checks.push({
     name: hasSession
-      ? "Protected app route with session"
-      : "Protected app route redirects without session",
+      ? "Protected dashboard route with session"
+      : "Protected dashboard route redirects without session",
     run: async () => {
-      const response = await request("/app", {}, hasSession ? "session" : "none");
+      const response = await request("/dashboard", {}, hasSession ? "session" : "none");
 
       if (!hasSession) {
         const location = response.headers.get("location") ?? "";

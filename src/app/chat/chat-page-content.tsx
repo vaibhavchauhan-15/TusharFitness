@@ -61,7 +61,7 @@ export async function ChatPageContent({
   }
 
   if (!sessionState.onboardingCompleted) {
-    redirect("/app/onboarding");
+    redirect("/onboarding");
   }
 
   const supabase = await createSupabaseServerClient();

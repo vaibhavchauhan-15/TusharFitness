@@ -68,7 +68,7 @@ export async function requireAdminSession() {
   const session = await getAdminSession();
 
   if (!session) {
-    redirect("/app/dashboard?admin=forbidden");
+    redirect("/dashboard?admin=forbidden");
   }
 
   return session;

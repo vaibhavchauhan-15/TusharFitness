@@ -114,7 +114,7 @@ function normalizeOAuthSource(value: FormDataEntryValue | null) {
   return normalized === "signup" ? "signup" : "login";
 }
 
-function toSafeAppPath(value: FormDataEntryValue | null, fallback: string) {
+function toSafeNextPath(value: FormDataEntryValue | null, fallback: string) {
   const candidate = String(value ?? "").trim();
 
   if (!candidate.startsWith("/") || candidate.startsWith("//")) {
@@ -242,16 +242,16 @@ export async function signInWithEmailAction(formData: FormData) {
       const isAdmin = await isActiveAdminUser(authAttempt.supabase, user.id);
 
       if (isAdmin) {
-        redirect("/app/admin/dashboard");
+        redirect("/admin/dashboard");
       }
 
       const profile = await ensureProfileForUser(authAttempt.supabase, user);
 
       if (!profile?.onboarding_completed) {
-        redirect("/app/onboarding");
+        redirect("/onboarding");
       }
 
-      redirect("/app/dashboard");
+      redirect("/dashboard");
     }
 
     redirect("/login?error=invalid_credentials");
@@ -281,7 +281,7 @@ export async function signUpWithEmailAction(formData: FormData) {
       email,
       password,
       options: {
-        emailRedirectTo: `${env.appUrl}/auth/callback?source=signup&next=/app/onboarding`,
+        emailRedirectTo: `${env.appUrl}/auth/callback?source=signup&next=/onboarding`,
         data: {
           full_name: fullName || null,
           preferred_username: normalizedHandle,
@@ -314,7 +314,7 @@ export async function signUpWithEmailAction(formData: FormData) {
           username: normalizedHandle,
         });
 
-        redirect("/app/onboarding");
+        redirect("/onboarding");
       }
 
       const adminSupabase = createSupabaseAdminClient();
@@ -338,8 +338,8 @@ export async function signUpWithEmailAction(formData: FormData) {
 export async function signInWithGoogleAction(formData: FormData) {
   const source = normalizeOAuthSource(formData.get("source"));
   const authPath = source === "signup" ? "/signup" : "/login";
-  const defaultNext = source === "signup" ? "/app/onboarding" : "/app/dashboard";
-  const nextPath = toSafeAppPath(formData.get("next"), defaultNext);
+  const defaultNext = source === "signup" ? "/onboarding" : "/dashboard";
+  const nextPath = toSafeNextPath(formData.get("next"), defaultNext);
   const callbackUrl = new URL("/auth/callback", env.appUrl);
   callbackUrl.searchParams.set("source", source);
   callbackUrl.searchParams.set("next", nextPath);
@@ -435,16 +435,16 @@ export async function completeOnboardingAction(formData: FormData) {
       path: "/",
     });
 
-    redirect("/app/dashboard");
+    redirect("/dashboard");
   }
 
   if (error?.code === "23505") {
     const usernameAvailability = await checkUsernameAvailability(finalUsername, username);
     const query = toUsernameConflictQuery(finalUsername, usernameAvailability?.suggestions ?? []);
-    redirect(`/app/onboarding?${query}`);
+    redirect(`/onboarding?${query}`);
   }
 
-  redirect("/app/onboarding?error=save_failed");
+  redirect("/onboarding?error=save_failed");
 }
 
 export async function signOutAction() {

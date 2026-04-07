@@ -56,7 +56,7 @@ export function WorkoutBrowser({
     }
     params.set("bodyPart", bodyPartSlug);
 
-    router.push(`/app/workouts/exercises?${params.toString()}`);
+    router.push(`/workouts/exercises?${params.toString()}`);
   };
 
   if (catalog.bodyParts.length === 0) {

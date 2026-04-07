@@ -155,7 +155,7 @@ export async function createDietPlanAction(formData: FormData) {
     },
   });
 
-  revalidatePath("/app/admin/diet-plans");
+  revalidatePath("/admin/diet-plans");
   revalidateTag(CACHE_TAGS.dietPlans, "max");
 }
 
@@ -240,9 +240,9 @@ export async function createWorkoutProgramAction(formData: FormData) {
     },
   });
 
-  revalidatePath("/app/admin/workouts");
-  revalidatePath("/app/workouts");
-  revalidatePath("/app/workouts/exercises");
+  revalidatePath("/admin/workouts");
+  revalidatePath("/workouts");
+  revalidatePath("/workouts/exercises");
   revalidateTag(CACHE_TAGS.workoutExercises, "max");
   revalidateTag(CACHE_TAGS.workoutsCatalog, "max");
 }
@@ -314,9 +314,9 @@ export async function createExerciseLibraryAction(formData: FormData) {
     },
   });
 
-  revalidatePath("/app/admin/exercise-library");
-  revalidatePath("/app/workouts");
-  revalidatePath("/app/workouts/exercises");
+  revalidatePath("/admin/exercise-library");
+  revalidatePath("/workouts");
+  revalidatePath("/workouts/exercises");
   revalidateTag(CACHE_TAGS.workoutExercises, "max");
   revalidateTag(CACHE_TAGS.workoutsCatalog, "max");
 }
@@ -362,7 +362,7 @@ export async function createCategoryAction(formData: FormData) {
     metadata: parsed,
   });
 
-  revalidatePath("/app/admin/categories");
+  revalidatePath("/admin/categories");
 }
 
 export async function createAnnouncementAction(formData: FormData) {
@@ -414,7 +414,7 @@ export async function createAnnouncementAction(formData: FormData) {
     },
   });
 
-  revalidatePath("/app/admin/announcements");
+  revalidatePath("/admin/announcements");
 }
 
 export async function createPricingPlanAction(formData: FormData) {
@@ -468,7 +468,7 @@ export async function createPricingPlanAction(formData: FormData) {
     },
   });
 
-  revalidatePath("/app/admin/subscriptions");
+  revalidatePath("/admin/subscriptions");
 }
 
 export async function setDietPlanStatusAction(planId: string, nextStatus: "draft" | "published" | "archived") {
@@ -504,7 +504,7 @@ export async function setDietPlanStatusAction(planId: string, nextStatus: "draft
     metadata: { status: validatedStatus },
   });
 
-  revalidatePath("/app/admin/diet-plans");
+  revalidatePath("/admin/diet-plans");
   revalidateTag(CACHE_TAGS.dietPlans, "max");
 }
 
@@ -568,5 +568,5 @@ export async function setUserAccountStatusAction(
     metadata: { status: validatedStatus },
   });
 
-  revalidatePath("/app/admin/users");
+  revalidatePath("/admin/users");
 }

@@ -9,7 +9,7 @@ function normalizeSource(value: string | null) {
   return value === "signup" ? "signup" : "login";
 }
 
-function toSafeAppPath(value: string | null, fallback: string) {
+function toSafeNextPath(value: string | null, fallback: string) {
   if (!value) {
     return fallback;
   }
@@ -26,8 +26,8 @@ export async function GET(request: Request) {
   const code = requestUrl.searchParams.get("code");
   const source = normalizeSource(requestUrl.searchParams.get("source"));
   const authFallback = source === "signup" ? "/signup" : "/login";
-  const defaultNext = source === "signup" ? "/app/onboarding" : "/app/dashboard";
-  const requestedNext = toSafeAppPath(requestUrl.searchParams.get("next"), defaultNext);
+  const defaultNext = source === "signup" ? "/onboarding" : "/dashboard";
+  const requestedNext = toSafeNextPath(requestUrl.searchParams.get("next"), defaultNext);
 
   const supabase = await createSupabaseServerClient();
 
@@ -57,12 +57,12 @@ export async function GET(request: Request) {
   const isAdmin = await isActiveAdminUser(supabase, user.id);
 
   if (isAdmin) {
-    return NextResponse.redirect(new URL("/app/admin/dashboard", request.url));
+    return NextResponse.redirect(new URL("/admin/dashboard", request.url));
   }
 
   const finalNext =
-    profile?.onboarding_completed && requestedNext.startsWith("/app/onboarding")
-      ? "/app/dashboard"
+    profile?.onboarding_completed && requestedNext.startsWith("/onboarding")
+      ? "/dashboard"
       : requestedNext;
 
   return NextResponse.redirect(new URL(finalNext, request.url));

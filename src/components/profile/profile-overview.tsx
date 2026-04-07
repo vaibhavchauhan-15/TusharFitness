@@ -108,7 +108,7 @@ export function ProfileOverview({
             Based on current weight and height, this gives users a quick health marker inside the profile flow.
           </p>
           <Link
-            href="/app/bmi-calculator"
+            href="/bmi-calculator"
             className="mt-5 inline-flex items-center rounded-full bg-[var(--primary-soft)] px-4 py-2 text-sm font-semibold text-[var(--primary)] transition hover:bg-[var(--accent-soft)]"
           >
             Open full BMI calculator

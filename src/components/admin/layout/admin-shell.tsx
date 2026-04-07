@@ -26,18 +26,18 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 const adminNavigation = [
-  { href: "/app/admin/dashboard", label: "Dashboard", icon: HiOutlineHome },
-  { href: "/app/admin/users", label: "Users", icon: HiOutlineUserGroup },
-  { href: "/app/admin/diet-plans", label: "Diet Plans", icon: HiOutlineQueueList },
-  { href: "/app/admin/workouts", label: "Workouts", icon: HiOutlineClipboardDocumentList },
-  { href: "/app/admin/exercise-library", label: "Exercise Library", icon: HiOutlineClipboardDocumentList },
-  { href: "/app/admin/subscriptions", label: "Subscriptions", icon: HiOutlineCreditCard },
-  { href: "/app/admin/payments", label: "Payments", icon: HiOutlineCreditCard },
-  { href: "/app/admin/categories", label: "Categories", icon: HiOutlineSquares2X2 },
-  { href: "/app/admin/media", label: "Media", icon: HiOutlinePhoto },
-  { href: "/app/admin/announcements", label: "Announcements", icon: HiOutlineMegaphone },
-  { href: "/app/admin/analytics", label: "Analytics", icon: HiOutlineChartBarSquare },
-  { href: "/app/admin/settings", label: "Settings", icon: HiOutlineCog6Tooth },
+  { href: "/admin/dashboard", label: "Dashboard", icon: HiOutlineHome },
+  { href: "/admin/users", label: "Users", icon: HiOutlineUserGroup },
+  { href: "/admin/diet-plans", label: "Diet Plans", icon: HiOutlineQueueList },
+  { href: "/admin/workouts", label: "Workouts", icon: HiOutlineClipboardDocumentList },
+  { href: "/admin/exercise-library", label: "Exercise Library", icon: HiOutlineClipboardDocumentList },
+  { href: "/admin/subscriptions", label: "Subscriptions", icon: HiOutlineCreditCard },
+  { href: "/admin/payments", label: "Payments", icon: HiOutlineCreditCard },
+  { href: "/admin/categories", label: "Categories", icon: HiOutlineSquares2X2 },
+  { href: "/admin/media", label: "Media", icon: HiOutlinePhoto },
+  { href: "/admin/announcements", label: "Announcements", icon: HiOutlineMegaphone },
+  { href: "/admin/analytics", label: "Analytics", icon: HiOutlineChartBarSquare },
+  { href: "/admin/settings", label: "Settings", icon: HiOutlineCog6Tooth },
 ] as const;
 
 type AdminShellProps = {
@@ -80,7 +80,7 @@ export function AdminShell({ children, user, roleLabel }: AdminShellProps) {
         >
           <div className={cn("mb-5 flex items-center", collapsed ? "flex-col gap-3" : "justify-between gap-3")}>
             <Link
-              href="/app/admin/dashboard"
+              href="/admin/dashboard"
               className={cn("min-w-0", collapsed ? "flex justify-center" : "flex items-center gap-3")}
               aria-label="Go to admin dashboard"
             >
@@ -167,21 +167,21 @@ export function AdminShell({ children, user, roleLabel }: AdminShellProps) {
               >
                 <div className="space-y-2">
                   <Link
-                    href={`/app/admin/profile/${user.username}`}
+                    href={`/admin/profile/${user.username}`}
                     className="block rounded-2xl px-3 py-2 text-sm font-medium transition hover:bg-(--primary-soft)"
                     onClick={() => setProfileOpen(false)}
                   >
                     Profile
                   </Link>
                   <Link
-                    href="/app/admin/settings"
+                    href="/admin/settings"
                     className="block rounded-2xl px-3 py-2 text-sm font-medium transition hover:bg-(--primary-soft)"
                     onClick={() => setProfileOpen(false)}
                   >
                     Settings
                   </Link>
                   <Link
-                    href="/app/dashboard"
+                    href="/dashboard"
                     className="block rounded-2xl px-3 py-2 text-sm font-medium transition hover:bg-(--primary-soft)"
                     onClick={() => setProfileOpen(false)}
                   >
@@ -230,7 +230,7 @@ export function AdminShell({ children, user, roleLabel }: AdminShellProps) {
           />
           <aside className="glass-panel absolute inset-y-0 left-0 w-[85%] max-w-[320px] rounded-r-[28px] p-4">
             <div className="mb-6 flex items-center justify-between">
-              <Link href="/app/admin/dashboard" className="flex items-center gap-3" onClick={() => setMobileOpen(false)}>
+              <Link href="/admin/dashboard" className="flex items-center gap-3" onClick={() => setMobileOpen(false)}>
                 <div className="relative h-11 w-11 overflow-hidden rounded-2xl border border-(--card-border)">
                   <Image src="/logo/logo.png" alt="TusharFitness logo" fill sizes="44px" className="object-cover" />
                 </div>
@@ -293,7 +293,7 @@ export function AdminShell({ children, user, roleLabel }: AdminShellProps) {
               {profileOpen ? (
                 <div className="mt-3 rounded-2xl border border-(--card-border) bg-background/60 p-2">
                   <Link
-                    href={`/app/admin/profile/${user.username}`}
+                    href={`/admin/profile/${user.username}`}
                     className="block rounded-xl px-3 py-2 text-sm font-medium transition hover:bg-(--primary-soft)"
                     onClick={() => {
                       setProfileOpen(false);
@@ -303,7 +303,7 @@ export function AdminShell({ children, user, roleLabel }: AdminShellProps) {
                     Profile
                   </Link>
                   <Link
-                    href="/app/admin/settings"
+                    href="/admin/settings"
                     className="block rounded-xl px-3 py-2 text-sm font-medium transition hover:bg-(--primary-soft)"
                     onClick={() => {
                       setProfileOpen(false);
@@ -313,7 +313,7 @@ export function AdminShell({ children, user, roleLabel }: AdminShellProps) {
                     Settings
                   </Link>
                   <Link
-                    href="/app/dashboard"
+                    href="/dashboard"
                     className="block rounded-xl px-3 py-2 text-sm font-medium transition hover:bg-(--primary-soft)"
                     onClick={() => {
                       setProfileOpen(false);

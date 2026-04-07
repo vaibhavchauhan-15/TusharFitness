@@ -13,6 +13,20 @@ const supabaseHostname = (() => {
 })();
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      {
+        source: "/app",
+        destination: "/dashboard",
+        permanent: false,
+      },
+      {
+        source: "/app/:path*",
+        destination: "/:path*",
+        permanent: false,
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {

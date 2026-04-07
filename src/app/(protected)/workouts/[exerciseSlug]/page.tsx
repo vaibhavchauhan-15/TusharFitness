@@ -75,8 +75,8 @@ export default async function ExerciseDetailPage({
   }
 
   const backToExercisesHref = backToExercisesParams.toString()
-    ? `/app/workouts/exercises?${backToExercisesParams.toString()}`
-    : "/app/workouts/exercises";
+    ? `/workouts/exercises?${backToExercisesParams.toString()}`
+    : "/workouts/exercises";
 
   const goal = catalog.goals.find((item) => item.slug === exercise.goalSlug) ?? null;
   const bodyPart = catalog.bodyParts.find((item) => item.slug === exercise.bodyPartSlug) ?? null;

@@ -105,7 +105,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
       <form action={signInWithGoogleAction}>
         <input type="hidden" name="source" value="login" />
-        <input type="hidden" name="next" value="/app/dashboard" />
+        <input type="hidden" name="next" value="/dashboard" />
         <Button type="submit" variant="outline" className="w-full">
           Continue with Google
         </Button>
