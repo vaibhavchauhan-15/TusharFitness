@@ -23,16 +23,10 @@ export async function middleware(request: NextRequest) {
   const isAuthed = Boolean(user);
   const pathname = request.nextUrl.pathname;
   const isProtected = isProtectedRoute(pathname);
-  const isLoginPage = pathname === "/login";
   const isSignupPage = pathname === "/signup";
 
   if (isProtected && !isAuthed) {
     return NextResponse.redirect(new URL("/login", request.url));
-  }
-
-  if (isLoginPage && isAuthed) {
-    const targetPath = isAdmin ? "/admin/dashboard" : "/dashboard";
-    return NextResponse.redirect(new URL(targetPath, request.url));
   }
 
   // Signed-in non-admin users may still need /signup for inactive access or renewal flows.
