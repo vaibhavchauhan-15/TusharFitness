@@ -120,19 +120,19 @@ export const ExpandingCards = React.forwardRef<HTMLUListElement, ExpandingCardsP
             <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent" />
 
             <article className="absolute inset-0 flex flex-col justify-end gap-2 p-4">
-              <h3 className="hidden origin-left rotate-90 text-sm font-light uppercase tracking-wider text-white/80 opacity-100 transition-all duration-300 ease-out md:block group-data-[active=true]:opacity-0">
+              <h3 className="hidden origin-left rotate-90 whitespace-nowrap text-sm font-light uppercase tracking-wider !text-white opacity-100 transition-all duration-300 ease-out md:block group-data-[active=true]:opacity-0">
                 {item.title}
               </h3>
 
-              <div className="text-white/90 opacity-0 transition-all duration-300 delay-75 ease-out group-data-[active=true]:opacity-100">
+              <div className="!text-white opacity-0 transition-all duration-300 delay-75 ease-out group-data-[active=true]:opacity-100">
                 {item.icon}
               </div>
 
-              <h3 className="text-xl font-bold text-white opacity-0 transition-all duration-300 delay-150 ease-out group-data-[active=true]:opacity-100">
+              <h3 className="text-xl font-bold !text-white opacity-0 transition-all duration-300 delay-150 ease-out group-data-[active=true]:opacity-100">
                 {item.title}
               </h3>
 
-              <p className="w-full max-w-xs text-sm text-white/80 opacity-0 transition-all duration-300 delay-225 ease-out group-data-[active=true]:opacity-100">
+              <p className="w-full max-w-xs text-sm !text-white opacity-0 transition-all duration-300 delay-225 ease-out group-data-[active=true]:opacity-100">
                 {item.description}
               </p>
             </article>
