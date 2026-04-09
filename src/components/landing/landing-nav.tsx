@@ -164,16 +164,16 @@ export function LandingNav() {
 
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
+      className={`fixed inset-x-0 top-3 z-50 flex flex-col items-center px-2 transition-all duration-300 sm:px-4 ${
         hideNavbar ? "-translate-y-full opacity-0 pointer-events-none" : "translate-y-0 opacity-100"
-      } ${headerBackgroundClass}`}
+      }`}
     >
-      <div className="mx-auto flex h-18 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className={`flex h-14 w-full max-w-6xl items-center justify-between rounded-full px-3 sm:px-4 lg:px-5 ${headerBackgroundClass}`}>
         <Link href="/" aria-label="TusharFitness home">
-          <Logo subtitle="AI Fitness Platform" framed={false} />
+          <Logo subtitle="" framed={false} iconClassName="h-9 w-9" titleClassName="text-xl" />
         </Link>
 
-        <nav className="hidden items-center gap-7 lg:flex" aria-label="Primary">
+        <nav className="hidden items-center gap-6 lg:flex" aria-label="Primary">
           {navItems.map((item) => (
             <a
               key={item.href}
@@ -204,22 +204,22 @@ export function LandingNav() {
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileMenuOpen}
             onClick={() => setMobileMenuOpen((prev) => !prev)}
-            className={`h-9 w-9 rounded-xl border-none bg-transparent lg:hidden ${iconButtonClass}`}
+            className={`h-8 w-8 rounded-xl border-none bg-transparent lg:hidden ${iconButtonClass}`}
           >
             {mobileMenuOpen ? <HiXMark className="h-5 w-5" /> : <HiBars3BottomRight className="h-5 w-5" />}
           </Button>
-          <ThemeToggle iconOnly className={`h-9 w-9 rounded-xl border-none bg-transparent ${iconButtonClass}`} />
-          <Button asChild variant="ghost" size="sm" className={`hidden rounded-xl sm:inline-flex ${loginClass}`}>
+          <ThemeToggle iconOnly className={`h-8 w-8 rounded-xl border-none bg-transparent ${iconButtonClass}`} />
+          <Button asChild variant="ghost" size="sm" className={`hidden h-8 rounded-xl px-3 sm:inline-flex ${loginClass}`}>
             <Link href="/login">Login</Link>
           </Button>
-          <Button asChild size="sm" className="rounded-xl bg-orange-500 px-4 font-semibold text-white hover:bg-orange-600">
+          <Button asChild size="sm" className="h-8 rounded-xl bg-orange-500 px-3.5 font-semibold text-white hover:bg-orange-600">
             <Link href="/signup">Get Started</Link>
           </Button>
         </div>
       </div>
 
       {mobileMenuOpen ? (
-        <div className={`${mobilePanelClass} px-4 py-4 lg:hidden`}>
+        <div className={`${mobilePanelClass} mt-2 w-full max-w-6xl rounded-2xl px-3 py-3 lg:hidden`}>
           <nav className="mx-auto grid w-full max-w-7xl gap-2" aria-label="Mobile primary">
             {navItems.map((item) => (
               <a
