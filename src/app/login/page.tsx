@@ -38,6 +38,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
   const error = getFirstQueryValue(params.error);
   const checkEmail = getFirstQueryValue(params["check-email"]);
+  const next = getFirstQueryValue(params.next);
+  const nextPath = next?.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
   const errorMessage = getLoginErrorMessage(error);
 
   return (
@@ -66,6 +68,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       ) : null}
 
       <form className="space-y-4" action={signInWithEmailAction}>
+        <input type="hidden" name="next" value={nextPath} />
         <div className="space-y-2">
           <label htmlFor="login-email" className="text-sm font-medium">
             Email
@@ -105,7 +108,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
       <form action={signInWithGoogleAction}>
         <input type="hidden" name="source" value="login" />
-        <input type="hidden" name="next" value="/dashboard" />
+        <input type="hidden" name="next" value={nextPath} />
         <Button type="submit" variant="outline" className="w-full">
           Continue with Google
         </Button>

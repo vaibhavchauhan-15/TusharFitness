@@ -222,6 +222,7 @@ async function runAuthCallWithRefreshRecovery<T extends { error: unknown }>(
 export async function signInWithEmailAction(formData: FormData) {
   const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
+  const requestedNext = toSafeNextPath(formData.get("next"), "/dashboard");
 
   const authAttempt = await runAuthCallWithRefreshRecovery((supabase) => {
     return supabase.auth.signInWithPassword({ email, password });
@@ -242,7 +243,8 @@ export async function signInWithEmailAction(formData: FormData) {
       const isAdmin = await isActiveAdminUser(authAttempt.supabase, user.id);
 
       if (isAdmin) {
-        redirect("/admin/dashboard");
+        const adminDestination = requestedNext.startsWith("/admin") ? requestedNext : "/admin/dashboard";
+        redirect(adminDestination);
       }
 
       const profile = await ensureProfileForUser(authAttempt.supabase, user);
@@ -251,7 +253,8 @@ export async function signInWithEmailAction(formData: FormData) {
         redirect("/onboarding");
       }
 
-      redirect("/dashboard");
+      const userDestination = requestedNext.startsWith("/admin") ? "/dashboard" : requestedNext;
+      redirect(userDestination);
     }
 
     redirect("/login?error=invalid_credentials");

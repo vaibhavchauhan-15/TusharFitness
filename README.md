@@ -34,7 +34,7 @@ This project ships with:
 
 ### User-facing experience
 
-- Smart entry flow: `/` redirects to `/app`, then routes to login/onboarding/dashboard based on auth state.
+- Smart entry flow: `/` is the marketing landing page for guests and routes authenticated users to onboarding/signup/dashboard based on account state.
 - Account creation with username checks and suggestions.
 - Onboarding to collect body metrics, goal, diet preferences, and activity profile.
 - Fitness command center:
@@ -48,7 +48,7 @@ This project ships with:
 
 ### Business/admin experience
 
-- Admin-only route group (`/app/admin/*`) with dashboard, users, workouts, media, subscriptions, payments, and analytics management pages.
+- Admin-only route group (`/admin/*`) with dashboard, users, workouts, media, subscriptions, payments, and analytics management pages.
 - Role-based admin access via `admin_users` table (`is_active = true`).
 - Admin workout media upload API with storage bucket auto-recovery.
 
@@ -87,15 +87,16 @@ This project ships with:
 
 ### Authentication and access
 
-1. Middleware refreshes Supabase session on matched routes (`/app/*`, `/login`, `/signup`).
-2. Unauthenticated users trying to access `/app/*` are redirected to `/login`.
-3. Authenticated users visiting `/login` or `/signup` are redirected:
-	 - admin users -> `/app/admin/dashboard`
-	 - regular users -> `/app/dashboard`.
+1. Middleware refreshes Supabase session on matched routes (including `/`, `/dashboard`, `/admin/*`, `/onboarding`, `/login`, and `/signup`).
+2. Unauthenticated users trying to access protected routes are redirected to `/login`.
+3. `/signup` redirect behavior is role-aware:
+	 - admin users -> `/admin/dashboard`
+	 - regular users are allowed to stay on `/signup` when inactive access renewal is required.
+4. `/login` remains reachable even with an existing session so users can recover from stale state or switch accounts.
 
 ### Onboarding and profile creation
 
-- After signup, users are directed to `/app/onboarding`.
+- After signup, users are directed to `/onboarding`.
 - Onboarding persists profile information such as username, age, height/weight, goals, diet type, and activity level.
 - Non-admin users cannot access protected app pages until onboarding is complete.
 
@@ -115,44 +116,41 @@ This project ships with:
 
 ### Public routes
 
-- `/` -> redirects to `/app`
+- `/` -> marketing landing (guest) and smart redirect entry (authenticated)
 - `/login`
 - `/signup`
 - `/auth/callback` (route handler for OAuth exchange)
-
-### App routes
-
-- `/app` (session-aware redirect gateway)
-- `/app/onboarding`
+- `/onboarding`
 
 ### Protected user routes
 
-- `/app/dashboard`
-- `/app/workouts`
-- `/app/workouts/exercises`
-- `/app/workouts/[exerciseSlug]`
-- `/app/fuel`
-- `/app/analytics`
-- `/app/bmi-calculator`
-- `/app/profile/[username]`
-- `/app/settings`
+- `/dashboard`
+- `/workouts`
+- `/workouts/exercises`
+- `/workouts/[exerciseSlug]`
+- `/fuel`
+- `/analytics`
+- `/bmi-calculator`
+- `/profile/[username]`
+- `/settings`
+- `/chat`
 
 ### Protected admin routes
 
-- `/app/admin`
-- `/app/admin/dashboard`
-- `/app/admin/users`
-- `/app/admin/subscriptions`
-- `/app/admin/payments`
-- `/app/admin/analytics`
-- `/app/admin/workouts`
-- `/app/admin/exercise-library`
-- `/app/admin/diet-plans`
-- `/app/admin/categories`
-- `/app/admin/announcements`
-- `/app/admin/media`
-- `/app/admin/settings`
-- `/app/admin/profile/[username]`
+- `/admin`
+- `/admin/dashboard`
+- `/admin/users`
+- `/admin/subscriptions`
+- `/admin/payments`
+- `/admin/analytics`
+- `/admin/workouts`
+- `/admin/exercise-library`
+- `/admin/diet-plans`
+- `/admin/categories`
+- `/admin/announcements`
+- `/admin/media`
+- `/admin/settings`
+- `/admin/profile/[username]`
 
 ## API Surface
 
@@ -424,7 +422,10 @@ supabase/
 
 - Confirm Supabase URL/key values are set.
 - Check callback URL and provider settings in Supabase.
-- Ensure middleware is running on `/app/*`, `/login`, and `/signup`.
+- Ensure middleware is running on protected routes plus `/login` and `/signup`.
+- Do not force-authenticated redirects from `/login` to `/dashboard` when protected layouts can redirect `/dashboard` back to `/signup` for inactive access.
+- Keep `/signup` accessible for signed-in non-admin users when it is used as the inactive-access destination.
+- After deploying auth redirect fixes, clear site cookies once to remove stale session state.
 
 ### Problem: OAuth callback fails
 

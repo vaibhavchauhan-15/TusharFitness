@@ -32,11 +32,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      data-scroll-behavior="smooth"
       suppressHydrationWarning
-      className={`${headingFont.variable} ${bodyFont.variable} h-full scroll-smooth`}
+      className={`${headingFont.variable} ${bodyFont.variable}`}
     >
-      <body className="min-h-full bg-[var(--background)] font-sans text-[var(--foreground)] antialiased">
+      <body className="bg-(--background) font-sans text-(--foreground) antialiased">
         <AppProviders>{children}</AppProviders>
       </body>
     </html>

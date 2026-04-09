@@ -234,14 +234,32 @@
   box-sizing: border-box;
 }
 
+html {
+  overflow-x: clip;
+  /* html is the single scroll root */
+  /* Lenis handles smooth scroll — native scroll-behavior is a fallback for reduced-motion */
+  scroll-behavior: auto;
+}
+
+/* Respect user's motion preferences — disable Lenis-style smoothing for them */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 body {
+  overflow-x: clip;
+  /* -webkit-font-smoothing ensures text stays crisp during GPU-accelerated scroll */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-body), sans-serif;
   font-size: var(--text-base);
   line-height: var(--leading-normal);
   background-image: var(--gradient-brand);
-  min-height: 100vh;
 }
 
 a,
@@ -588,6 +606,19 @@ p {
 .dark .hero-grid {
   background-image: linear-gradient(to right, rgba(228, 228, 231, 0.1) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(228, 228, 231, 0.1) 1px, transparent 1px);
+}
+
+[data-scroll-reveal],
+[data-stagger-item],
+[data-scroll-float],
+[data-scroll-zoom] {
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 .text-balance {
