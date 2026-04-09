@@ -168,7 +168,7 @@ export function LandingNav() {
         hideNavbar ? "-translate-y-full opacity-0 pointer-events-none" : "translate-y-0 opacity-100"
       }`}
     >
-      <div className={`flex h-14 w-full max-w-6xl items-center justify-between rounded-full px-3 sm:px-4 lg:px-5 ${headerBackgroundClass}`}>
+      <div className={`flex h-14 w-full max-w-5xl items-center justify-between rounded-full px-3 sm:px-4 lg:px-5 ${headerBackgroundClass}`}>
         <Link href="/" aria-label="TusharFitness home">
           <Logo subtitle="" framed={false} iconClassName="h-9 w-9" titleClassName="text-xl" />
         </Link>
@@ -209,7 +209,7 @@ export function LandingNav() {
             {mobileMenuOpen ? <HiXMark className="h-5 w-5" /> : <HiBars3BottomRight className="h-5 w-5" />}
           </Button>
           <ThemeToggle iconOnly className={`h-8 w-8 rounded-xl border-none bg-transparent ${iconButtonClass}`} />
-          <Button asChild variant="ghost" size="sm" className={`hidden h-8 rounded-xl px-3 sm:inline-flex ${loginClass}`}>
+          <Button asChild variant="ghost" size="sm" className={`hidden h-8 rounded-full px-3 sm:inline-flex ${loginClass}`}>
             <Link href="/login">Login</Link>
           </Button>
           <Button asChild size="sm" className="h-8 rounded-xl bg-orange-500 px-3.5 font-semibold text-white hover:bg-orange-600">
@@ -219,7 +219,7 @@ export function LandingNav() {
       </div>
 
       {mobileMenuOpen ? (
-        <div className={`${mobilePanelClass} mt-2 w-full max-w-6xl rounded-2xl px-3 py-3 lg:hidden`}>
+        <div className={`${mobilePanelClass} mt-2 w-full max-w-5xl rounded-2xl px-3 py-3 lg:hidden`}>
           <nav className="mx-auto grid w-full max-w-7xl gap-2" aria-label="Mobile primary">
             {navItems.map((item) => (
               <a
