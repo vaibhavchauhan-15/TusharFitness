@@ -1,33 +1,44 @@
-import Image from "next/image";
+"use client";
 
-const diets = [
+import { Apple, Leaf, Salad, Soup } from "lucide-react";
+import { ExpandingCards, type CardItem } from "@/components/ui/expanding-cards";
+
+const diets: CardItem[] = [
   {
+    id: "high-protein-vegetarian",
     title: "High-Protein Vegetarian",
-    tag: "Macro balanced",
-    description: "Paneer, lentils, tofu, and grain combinations tuned for strength goals.",
-    image:
+    description: "Macro balanced paneer, lentils, tofu, and grains tuned for strength targets.",
+    imgSrc:
       "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=1200&q=80",
+    icon: <Leaf size={22} className="text-white" />,
+    linkHref: "/onboarding",
   },
   {
+    id: "lean-non-veg-plans",
     title: "Lean Non-Veg Plans",
-    tag: "Fat loss",
-    description: "Simple Indian meals with calorie control and high satiety for consistency.",
-    image:
+    description: "Fat-loss-first Indian meals with calorie control and high satiety.",
+    imgSrc:
       "https://images.unsplash.com/photo-1543362906-acfc16c67564?auto=format&fit=crop&w=1200&q=80",
+    icon: <Salad size={22} className="text-white" />,
+    linkHref: "/onboarding",
   },
   {
+    id: "muscle-gain-meals",
     title: "Muscle Gain Meals",
-    tag: "High calorie",
-    description: "Performance meals with clean carb and protein structures for growth cycles.",
-    image:
+    description: "High-calorie performance meals with clean carb and protein structures.",
+    imgSrc:
       "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=1200&q=80",
+    icon: <Apple size={22} className="text-white" />,
+    linkHref: "/onboarding",
   },
   {
+    id: "weight-loss-thali",
     title: "Weight-Loss Thali",
-    tag: "Sustainable",
-    description: "Traditional thali-inspired plans built for steady fat loss and adherence.",
-    image:
+    description: "Sustainable thali-inspired plans for steady fat loss and long-term adherence.",
+    imgSrc:
       "https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=1200&q=80",
+    icon: <Soup size={22} className="text-white" />,
+    linkHref: "/onboarding",
   },
 ];
 
@@ -51,33 +62,13 @@ export function DietSection() {
           </p>
         </div>
 
-        <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4" data-scroll-stagger>
-          {diets.map((diet) => (
-            <article
-              key={diet.title}
-              data-stagger-item
-              className="group flex h-full flex-col overflow-hidden rounded-3xl border border-border/70 bg-card/80 shadow-[0_16px_42px_rgba(2,6,23,0.1)]"
-            >
-              <div className="relative h-44 sm:h-48" data-scroll-float>
-                <Image
-                  src={diet.image}
-                  alt={diet.title}
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-linear-to-t from-black/45 via-black/10 to-transparent" />
-                <span className="absolute bottom-3 left-3 rounded-full border border-white/25 bg-black/35 px-3 py-1 text-[11px] uppercase tracking-[0.12em] text-white backdrop-blur">
-                  {diet.tag}
-                </span>
-              </div>
-              <div className="flex flex-1 flex-col p-5">
-                <h3 className="text-lg font-semibold text-foreground">{diet.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{diet.description}</p>
-              </div>
-            </article>
-          ))}
-        </div>
+        <ExpandingCards
+          items={diets}
+          defaultActiveIndex={0}
+          className="mt-10 h-140 max-w-none md:h-105"
+          data-scroll-stagger
+        />
+        <p className="mt-4 text-sm text-muted-foreground">Each plan maps to familiar Indian meals with practical timing.</p>
       </div>
     </section>
   );
