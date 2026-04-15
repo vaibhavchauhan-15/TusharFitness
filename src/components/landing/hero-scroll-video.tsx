@@ -434,10 +434,10 @@ export function HeroScrollVideo() {
 
       <div className="relative z-20 mx-auto flex h-full w-full max-w-6xl items-center px-4 sm:px-6 lg:px-8">
         <div className="hero-content max-w-2xl space-y-6">
-          <h1 className="text-4xl font-semibold leading-tight text-white sm:text-5xl lg:text-6xl">
+          <h1 className="text-4xl font-semibold leading-tight text-white! sm:text-5xl lg:text-6xl">
             AI-guided fitness coaching that stays simple and effective
           </h1>
-          <p className="text-base text-white/82 sm:text-lg">
+          <p className="text-base text-white/82! sm:text-lg">
             Personalized workouts, practical nutrition, and progress tracking in one professional platform built for consistency.
           </p>
 

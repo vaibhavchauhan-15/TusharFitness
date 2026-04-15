@@ -25,6 +25,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Sparkles as SparklesComp } from "@/components/ui/sparkles";
 import { TimelineContent } from "@/components/ui/timeline-animation";
 import { VerticalCutReveal } from "@/components/ui/vertical-cut-reveal";
+import { LANDING_APPLE_SPRING_TRANSITION } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 const YEARLY_DISCOUNT_PERCENT = 20;
@@ -157,7 +158,7 @@ function PricingSwitch({
             <motion.span
               layoutId="pricing-switch"
               className="absolute inset-0 rounded-full border border-primary/45 bg-primary shadow-md"
-              transition={{ type: "spring", stiffness: 500, damping: 34 }}
+              transition={LANDING_APPLE_SPRING_TRANSITION}
             />
           ) : null}
           <span className="relative">Monthly</span>
@@ -175,7 +176,7 @@ function PricingSwitch({
             <motion.span
               layoutId="pricing-switch"
               className="absolute inset-0 rounded-full border border-primary/45 bg-primary shadow-md"
-              transition={{ type: "spring", stiffness: 500, damping: 34 }}
+              transition={LANDING_APPLE_SPRING_TRANSITION}
             />
           ) : null}
 
@@ -261,7 +262,7 @@ export default function PricingSection4() {
               staggerFrom="first"
               reverse
               containerClassName="justify-center"
-              transition={{ type: "spring", stiffness: 230, damping: 34, delay: 0 }}
+              transition={{ ...LANDING_APPLE_SPRING_TRANSITION, delay: 0 }}
             >
               Premium plans built for every stage of your fitness journey
             </VerticalCutReveal>
@@ -324,7 +325,7 @@ export default function PricingSection4() {
                 <motion.div
                   className="h-full"
                   whileHover={{ y: -8, scale: 1.03 }}
-                  transition={{ type: "spring", stiffness: 260, damping: 24 }}
+                  transition={LANDING_APPLE_SPRING_TRANSITION}
                 >
                   <Card
                     className={cn(
